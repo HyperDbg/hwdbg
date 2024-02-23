@@ -22,7 +22,13 @@ object Main extends App {
   println(
     ChiselStage.emitSystemVerilog(
       new Blinky(1000),
-      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
+      firtoolOpts = Array(
+      "-disable-all-randomization", 
+      "-strip-debug-info",
+      "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
+      "-o",
+      "generated/",
+      )
     )
   )
 }
