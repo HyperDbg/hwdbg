@@ -32,3 +32,26 @@ class GCD extends Module {
   io.outputGCD := x
   io.outputValid := y === 0.U
 }
+
+object Main extends App {
+
+  //
+  // These lines generate the Verilog output
+  //
+  println(
+    (new chisel3.stage.ChiselStage).emitVerilog(
+      new GCD(
+	// parameters (if any)
+      ),
+      Array(
+        "--emission-options=disableMemRandomization,disableRegisterRandomization",
+        "-e", // The intention for this argument (and next argument) is to separate generated files.
+        "verilog", // We could also use "sverilog" to generate SystemVerilog files.
+        "--target-dir",
+        "generated/",
+        "--target:fpga"
+      )
+    )
+  )
+
+}
