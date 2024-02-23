@@ -5,23 +5,7 @@
 ## Description
 **hwdbg** is a chip-level debugger written in chisel. (This is a work in progress and not yet ready for testing!).
 
-## Dependencies
-
-#### JDK 8 or newer
-
-We recommend LTS releases Java 8 and Java 11. You can install the JDK as your operating system recommends, or use the prebuilt binaries from [AdoptOpenJDK](https://adoptopenjdk.net/).
-
-#### SBT or mill
-
-SBT is the most common build tool in the Scala community. You can download it [here](https://www.scala-sbt.org/download.html).  
-mill is another Scala/Java build tool without obscure DSL like SBT. You can download it [here](https://github.com/com-lihaoyi/mill/releases)
-
-#### Verilator
-
-The test with `svsim` needs Verilator installed.
-See Verilator installation instructions [here](https://verilator.org/guide/latest/install.html).
-
-### Test
+## Test
 
 You should now have a working Chisel3 project.
 
@@ -43,5 +27,13 @@ You should see a whole bunch of output that ends with something like the followi
 ```
 If you see the above then the test was successful.
 
+### ModelSim
+
+If you want to use ModelSim instead of GTKWave, you can configure the `modelsim.config` file. Please visit <a href="https://github.com/HyperDbg/hwdbg/blob/main/sim/README.md">here</a> for more information.
+
+## Output 
+
+The final generated codes for fuzzy controllers are available in the `generated` directory.
+
 ## License
-**hwdbg**, and all its submodules and repos, unless a license is otherwise specified, are licensed under **GPLv3** LICENSE.
+**hwdbg** and all its submodules and repos, unless a license is otherwise specified, are licensed under **GPLv3** LICENSE.
