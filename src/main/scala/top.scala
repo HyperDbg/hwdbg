@@ -1,3 +1,17 @@
+/** @file
+  *   top.scala
+  * @author
+  *   Sina Karvandi (sina@hyperdbg.org)
+  * @brief
+  *   hwdbg's top module
+  * @details
+  * @version 0.1
+  * @date
+  *   2024-04-03
+  *
+  * @copyright
+  *   This project is released under the GNU Public License v3.
+  */
 package hwdbg
 
 import chisel3._
@@ -28,7 +42,7 @@ class DebuggerModule(
 
     //
     // Interrupt signals (lines)
-    //   
+    //
     val plInSignal = Input(Bool()) // PS to PL signal
     val psOutInterrupt = Output(Bool()) // PL to PS interrupt
 
@@ -38,11 +52,10 @@ class DebuggerModule(
     val rdAddr = Input(UInt(bramAddrWidth.W)) // read address
     val rdData = Output(UInt(bramDataWidth.W)) // read data
     val wrAddr = Input(UInt(bramAddrWidth.W)) // write address
-    val wrEna  = Input(Bool()) // enable writing
+    val wrEna = Input(Bool()) // enable writing
     val wrData = Input(UInt(bramDataWidth.W)) // write data
 
   })
-
 
 }
 
@@ -54,18 +67,18 @@ object Main extends App {
   println(
     ChiselStage.emitSystemVerilog(
       new DebuggerModule(
-        DebuggerConfigurations.ENABLE_DEBUG, 
+        DebuggerConfigurations.ENABLE_DEBUG,
         DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
         DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
         DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
         DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
       ),
       firtoolOpts = Array(
-      "-disable-all-randomization", 
-      "-strip-debug-info",
-      "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
-      "-o",
-      "generated/",
+        "-disable-all-randomization",
+        "-strip-debug-info",
+        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
+        "-o",
+        "generated/"
       )
     )
   )
