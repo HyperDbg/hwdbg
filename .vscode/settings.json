@@ -1,0 +1,8 @@
+{
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "metals.scalafmtConfigPath": ".scalafmt.conf",
+    "files.watcherExclude": {
+        "**/target": true
+    }
+}

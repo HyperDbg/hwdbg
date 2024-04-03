@@ -35,28 +35,31 @@ class DebuggerModule(
     //
     // BRAM (Block RAM) ports
     //
-    val rdAddr = Input(UInt(bramAddrWidth.W))
-    val rdData = Output(UInt(bramDataWidth.W))
-    val wrAddr = Input(UInt(bramAddrWidth.W))
-    val wrEna  = Input(Bool())
-    val wrData = Input(UInt(bramDataWidth.W))
+    val rdAddr = Input(UInt(bramAddrWidth.W)) // read address
+    val rdData = Output(UInt(bramDataWidth.W)) // read data
+    val wrAddr = Input(UInt(bramAddrWidth.W)) // write address
+    val wrEna  = Input(Bool()) // enable writing
+    val wrData = Input(UInt(bramDataWidth.W)) // write data
 
   })
 
-  // Blink LED every second using Chisel built-in util.Counter
-  val led = RegInit(startOn.B)
-  val (_, counterWrap) = Counter(true.B, freq / 2)
-  when(counterWrap) {
-    led := ~led
-  }
-  io.led0 := led
+
 }
 
 object Main extends App {
-  // These lines generate the Verilog output
+
+  //
+  // Generate hwdbg verilog files
+  //
   println(
     ChiselStage.emitSystemVerilog(
-      new Blinky(1000),
+      new DebuggerModule(
+        DebuggerConfigurations.ENABLE_DEBUG, 
+        DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
+        DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+        DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+      ),
       firtoolOpts = Array(
       "-disable-all-randomization", 
       "-strip-debug-info",

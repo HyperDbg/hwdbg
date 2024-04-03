@@ -9,14 +9,40 @@ import chisel3.util._
   */
 object DebuggerConfigurations {
 
-  val ENABLE_DEBUG: Boolean = false // whether to enable debug or not
+  //
+  // whether to enable debug or not
+  //
+  val ENABLE_DEBUG: Boolean = false
 
-  val NUMBER_OF_INPUT_PINS: Int = 16 // Number of input pins
+  //
+  // Number of input pins
+  //
+  val NUMBER_OF_INPUT_PINS: Int = 16
 
-  val NUMBER_OF_OUTPUT_PINS: Int = 16 // Number of output pins
+  //
+  // Number of output pins
+  //
+  val NUMBER_OF_OUTPUT_PINS: Int = 16
 
-  val BLOCK_RAM_ADDR_WIDTH: Int = 13 // Address width of the Block RAM (BRAM)
+  //
+  // Address width of the Block RAM (BRAM)
+  //
+  val BLOCK_RAM_ADDR_WIDTH: Int = 13
 
-  val BLOCK_RAM_DATA_WIDTH: Int = 32 // Data width of the Block RAM (BRAM)
+  //
+  // Data width of the Block RAM (BRAM)
+  //
+  val BLOCK_RAM_DATA_WIDTH: Int = 32
 
+}
+
+/** @brief
+  *   The constants for min-max tree
+  */
+object GeneralConfigurations {
+
+  //
+  // Default number of bytes used in initialized SRAM memory
+  //
+  val DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE: Int = 8192 // 8 KB
 }

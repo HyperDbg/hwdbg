@@ -1,0 +1,3 @@
+[ZoneTransfer]
+ZoneId=3
+HostUrl=https://raw.githubusercontent.com/cslab-chosun/online-fuzzy-chisel/main/.scalafmt.conf
