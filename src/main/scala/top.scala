@@ -32,30 +32,39 @@ class DebuggerModule(
     //
     // Chip signals
     //
+    /*
     val en = Input(Bool()) // chip enable signal
+     */
 
     //
     // Input/Output signals
     //
+
     val inputPin = Input(Vec(numberOfInputPins, UInt((1.W)))) // input pins
     val outputPin = Output(Vec(numberOfOutputPins, UInt((1.W)))) // output pins
 
     //
     // Interrupt signals (lines)
     //
+    /*
     val plInSignal = Input(Bool()) // PS to PL signal
     val psOutInterrupt = Output(Bool()) // PL to PS interrupt
+     */
 
     //
     // BRAM (Block RAM) ports
     //
+    /*
     val rdAddr = Input(UInt(bramAddrWidth.W)) // read address
     val rdData = Output(UInt(bramDataWidth.W)) // read data
     val wrAddr = Input(UInt(bramAddrWidth.W)) // write address
     val wrEna = Input(Bool()) // enable writing
     val wrData = Input(UInt(bramDataWidth.W)) // write data
+     */
 
   })
+
+  io.outputPin := io.inputPin
 
 }
 
