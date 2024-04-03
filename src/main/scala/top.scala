@@ -4,10 +4,45 @@ import chisel3._
 import chisel3.util.Counter
 import circt.stage.ChiselStage
 
-class Blinky(freq: Int, startOn: Boolean = false) extends Module {
+import hwdbg.configs._
+
+class DebuggerModule(
+    debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+    numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
+    numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+    bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+) extends Module {
   val io = IO(new Bundle {
-    val led0 = Output(Bool())
+
+    //
+    // Chip signals
+    //
+    val en = Input(Bool()) // chip enable signal
+
+    //
+    // Input/Output signals
+    //
+    val inputPin = Input(Vec(numberOfInputPins, UInt((1.W)))) // input pins
+    val outputPin = Output(Vec(numberOfOutputPins, UInt((1.W)))) // output pins
+
+    //
+    // Interrupt signals (lines)
+    //   
+    val plInSignal = Input(Bool()) // PS to PL signal
+    val psOutInterrupt = Output(Bool()) // PL to PS interrupt
+
+    //
+    // BRAM (Block RAM) ports
+    //
+    val rdAddr = Input(UInt(bramAddrWidth.W))
+    val rdData = Output(UInt(bramDataWidth.W))
+    val wrAddr = Input(UInt(bramAddrWidth.W))
+    val wrEna  = Input(Bool())
+    val wrData = Input(UInt(bramDataWidth.W))
+
   })
+
   // Blink LED every second using Chisel built-in util.Counter
   val led = RegInit(startOn.B)
   val (_, counterWrap) = Counter(true.B, freq / 2)
