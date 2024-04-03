@@ -340,12 +340,12 @@ project/plugins/project/
 hs_err_pid*
 
 # Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+#.vscode/*
+#!.vscode/settings.json
+#!.vscode/tasks.json
+#!.vscode/launch.json
+#!.vscode/extensions.json
+#!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
@@ -358,3 +358,6 @@ hs_err_pid*
 
 # Scala metals
 .bloop/
+
+# Temporary disable the generated verilog files
+#generated/
