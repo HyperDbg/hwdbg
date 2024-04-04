@@ -60,9 +60,12 @@ class DebuggerMain(
   //
   // Used for testing verilog generation, should be removed
   //
-  io.outputPin := io.inputPin
-  io.psOutInterrupt := io.plInSignal
-  io.rdAddr := io.rdData | io.wrAddr | io.wrData | io.wrEna
+  for (i <- 0 until numberOfOutputPins) {
+    io.outputPin(i) := 0.U
+  }
+
+  io.psOutInterrupt := false.B
+  io.rdData := 0.U
 }
 
 object DebuggerMain {
