@@ -1,13 +1,13 @@
 /** @file
-  *   top.scala
+  *   top_test.scala
   * @author
   *   Sina Karvandi (sina@hyperdbg.org)
   * @brief
-  *   hwdbg's top module
+  *   hwdbg's top module (with BRAM) for testing
   * @details
   * @version 0.1
   * @date
-  *   2024-04-03
+  *   2024-04-04
   *
   * @copyright
   *   This project is released under the GNU Public License v3.
@@ -18,8 +18,9 @@ import circt.stage.ChiselStage
 
 import hwdbg._
 import hwdbg.configs._
+import hwdbg.libs.mem._
 
-class DebuggerModule(
+class DebuggerModuleTestingBRAM(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
     numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
@@ -46,15 +47,32 @@ class DebuggerModule(
     val psOutInterrupt = Output(Bool()) // PL to PS interrupt
 
     //
-    // BRAM (Block RAM) ports
+    // *** BRAM (Block RAM) ports are initialized from an external file ***
     //
-    val rdAddr = Input(UInt(bramAddrWidth.W)) // read address
-    val rdData = Output(UInt(bramDataWidth.W)) // read data
-    val wrAddr = Input(UInt(bramAddrWidth.W)) // write address
-    val wrEna = Input(Bool()) // enable writing
-    val wrData = Input(UInt(bramDataWidth.W)) // write data
 
   })
+
+  val bramEn = WireInit(false.B)
+  val bramWrite = WireInit(false.B)
+  val bramAddr = WireInit(0.U(bramAddrWidth.W))
+  val bramDataIn = WireInit(0.U(bramDataWidth.W))
+
+  //
+  // Instantiate the BRAM memory initializer module
+  //
+  val dataOut =
+    InitMemInline(
+      debug,
+      TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
+      bramAddrWidth,
+      bramDataWidth,
+      GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+    )(
+      bramEn,
+      bramWrite,
+      bramAddr,
+      bramDataIn
+    )
 
   //
   // Instantiate the debugger's main module
@@ -70,39 +88,14 @@ class DebuggerModule(
       io.en,
       io.inputPin,
       io.plInSignal,
-      io.rdAddr,
-      io.wrAddr,
-      io.wrEna,
-      io.wrData
+      bramAddr,
+      bramAddr,
+      bramEn,
+      dataOut
     )
 
   io.outputPin := outputPin
   io.psOutInterrupt := psOutInterrupt
-  io.rdData := rdData
+  bramDataIn := rdData
 
-}
-
-object Main extends App {
-
-  //
-  // Generate hwdbg verilog files
-  //
-  println(
-    ChiselStage.emitSystemVerilog(
-      new DebuggerModule(
-        DebuggerConfigurations.ENABLE_DEBUG,
-        DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-        DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
-        DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
-      ),
-      firtoolOpts = Array(
-        "-disable-all-randomization",
-        "-strip-debug-info",
-        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
-        "-o",
-        "generated/"
-      )
-    )
-  )
 }

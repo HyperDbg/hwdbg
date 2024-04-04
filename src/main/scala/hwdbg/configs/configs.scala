@@ -18,7 +18,7 @@ import chisel3._
 import chisel3.util._
 
 /** @brief
-  *   The constants for min-max tree
+  *   Design constants
   */
 object DebuggerConfigurations {
 
@@ -50,7 +50,7 @@ object DebuggerConfigurations {
 }
 
 /** @brief
-  *   The constants for min-max tree
+  *   The constants for configuration
   */
 object GeneralConfigurations {
 
@@ -58,4 +58,12 @@ object GeneralConfigurations {
   // Default number of bytes used in initialized SRAM memory
   //
   val DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE: Int = 8192 // 8 KB
+}
+
+/** @brief
+  *   The configuration constants for testing
+  */
+object TestingConfigurations {
+
+  val BRAM_INITIALIZATION_FILE_PATH: String = "/test.hex.txt"
 }
