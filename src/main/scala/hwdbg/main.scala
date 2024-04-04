@@ -57,8 +57,12 @@ class DebuggerMain(
 
   })
 
+  //
+  // Used for testing verilog generation, should be removed
+  //
   io.outputPin := io.inputPin
-
+  io.psOutInterrupt := io.plInSignal
+  io.rdAddr := io.rdData | io.wrAddr | io.wrData | io.wrEna
 }
 
 object DebuggerMain {
