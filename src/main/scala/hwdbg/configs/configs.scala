@@ -65,5 +65,6 @@ object GeneralConfigurations {
   */
 object TestingConfigurations {
 
-  val BRAM_INITIALIZATION_FILE_PATH: String = "/test.hex.txt"
+  val BRAM_INITIALIZATION_FILE_PATH: String =
+    "src/main/resources/8kb_BRAM.hex"
 }
