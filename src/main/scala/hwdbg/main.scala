@@ -49,11 +49,10 @@ class DebuggerMain(
     //
     // BRAM (Block RAM) ports
     //
-    val rdAddr = Input(UInt(bramAddrWidth.W)) // read address
-    val rdData = Output(UInt(bramDataWidth.W)) // read data
-    val wrAddr = Input(UInt(bramAddrWidth.W)) // write address
-    val wrEna = Input(Bool()) // enable writing
-    val wrData = Input(UInt(bramDataWidth.W)) // write data
+    val rdWrAddr = Output(UInt(bramAddrWidth.W)) // read/write address
+    val rdData = Input(UInt(bramDataWidth.W)) // read data
+    val wrEna = Output(Bool()) // enable writing
+    val wrData = Output(UInt(bramDataWidth.W)) // write data
 
   })
 
@@ -65,7 +64,9 @@ class DebuggerMain(
   }
 
   io.psOutInterrupt := false.B
-  io.rdData := 0.U
+  io.rdWrAddr := 0.U
+  io.wrEna := false.B
+  io.wrData := 0.U
 }
 
 object DebuggerMain {
@@ -79,12 +80,9 @@ object DebuggerMain {
   )(
       en: Bool,
       inputPin: Vec[UInt],
-      psOutInterrupt: Bool,
-      rdAddr: UInt,
-      wrAddr: UInt,
-      wrEna: Bool,
-      wrData: UInt
-  ): (Vec[UInt], Bool, UInt) = {
+      plInSignal: Bool,
+      rdData: UInt
+  ): (Vec[UInt], Bool, UInt, Bool, UInt) = {
 
     val debuggerMainModule = Module(
       new DebuggerMain(
@@ -98,28 +96,30 @@ object DebuggerMain {
 
     val outputPin = Wire(Vec(numberOfOutputPins, UInt((1.W))))
     val psOutInterrupt = Wire(Bool())
-    val rdData = Wire(UInt(bramDataWidth.W))
+    val rdWrAddr = Wire(UInt(bramAddrWidth.W))
+    val wrEna = Wire(Bool())
+    val wrData = Wire(UInt(bramDataWidth.W))
 
     //
     // Configure the input signals
     //
     debuggerMainModule.io.en := en
     debuggerMainModule.io.inputPin := inputPin
-    debuggerMainModule.io.rdAddr := rdAddr
-    debuggerMainModule.io.wrAddr := wrAddr
-    debuggerMainModule.io.wrEna := wrEna
-    debuggerMainModule.io.wrData := wrData
+    debuggerMainModule.io.plInSignal := plInSignal
+    debuggerMainModule.io.rdData := rdData
 
     //
     // Configure the input signals
     //
     outputPin := debuggerMainModule.io.outputPin
     psOutInterrupt := debuggerMainModule.io.psOutInterrupt
-    rdData := debuggerMainModule.io.rdData
+    rdWrAddr := debuggerMainModule.io.rdWrAddr
+    wrEna := debuggerMainModule.io.wrEna
+    wrData := debuggerMainModule.io.wrData
 
     //
     // Return the output result
     //
-    (outputPin, psOutInterrupt, rdData)
+    (outputPin, psOutInterrupt, rdWrAddr, wrEna, wrData)
   }
 }

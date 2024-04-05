@@ -48,18 +48,17 @@ class DebuggerModule(
     //
     // BRAM (Block RAM) ports
     //
-    val rdAddr = Input(UInt(bramAddrWidth.W)) // read address
-    val rdData = Output(UInt(bramDataWidth.W)) // read data
-    val wrAddr = Input(UInt(bramAddrWidth.W)) // write address
-    val wrEna = Input(Bool()) // enable writing
-    val wrData = Input(UInt(bramDataWidth.W)) // write data
+    val rdWrAddr = Output(UInt(bramAddrWidth.W)) // read/write address
+    val rdData = Input(UInt(bramDataWidth.W)) // read data
+    val wrEna = Output(Bool()) // enable writing
+    val wrData = Output(UInt(bramDataWidth.W)) // write data
 
   })
 
   //
   // Instantiate the debugger's main module
   //
-  val (outputPin, psOutInterrupt, rdData) =
+  val (outputPin, psOutInterrupt, rdWrAddr, wrEna, wrData) =
     DebuggerMain(
       debug,
       numberOfInputPins,
@@ -70,15 +69,14 @@ class DebuggerModule(
       io.en,
       io.inputPin,
       io.plInSignal,
-      io.rdAddr,
-      io.wrAddr,
-      io.wrEna,
-      io.wrData
+      io.rdData
     )
 
   io.outputPin := outputPin
   io.psOutInterrupt := psOutInterrupt
-  io.rdData := rdData
+  io.rdWrAddr := rdWrAddr
+  io.wrEna := wrEna
+  io.wrData := wrData
 
 }
 

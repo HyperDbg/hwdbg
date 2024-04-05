@@ -57,6 +57,8 @@ class DebuggerModuleTestingBRAM(
   val bramAddr = WireInit(0.U(bramAddrWidth.W))
   val bramDataIn = WireInit(0.U(bramDataWidth.W))
 
+  val bramDataOut = WireInit(0.U(bramDataWidth.W))
+
   //
   // Instantiate the BRAM memory initializer module
   //
@@ -74,10 +76,12 @@ class DebuggerModuleTestingBRAM(
       bramDataIn
     )
 
+  bramDataOut := dataOut
+
   //
   // Instantiate the debugger's main module
   //
-  val (outputPin, psOutInterrupt, rdData) =
+  val (outputPin, psOutInterrupt, rdWrAddr, wrEna, wrData) =
     DebuggerMain(
       debug,
       numberOfInputPins,
@@ -88,14 +92,46 @@ class DebuggerModuleTestingBRAM(
       io.en,
       io.inputPin,
       io.plInSignal,
-      bramAddr,
-      bramAddr,
-      bramEn,
-      dataOut
+      bramDataOut
     )
 
+  //
+  // Connect BRAM Pins
+  //
+  bramEn := io.en // enable BRAM when the main chip enabled
+  bramAddr := rdWrAddr
+  bramWrite := wrEna
+  bramDataIn := wrData
+
+  //
+  // Connect I/O pins
+  //
   io.outputPin := outputPin
   io.psOutInterrupt := psOutInterrupt
-  bramDataIn := rdData
 
+}
+
+object MainWithInitializedBRAM extends App {
+
+  //
+  // Generate hwdbg verilog files
+  //
+  println(
+    ChiselStage.emitSystemVerilog(
+      new DebuggerModuleTestingBRAM(
+        DebuggerConfigurations.ENABLE_DEBUG,
+        DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
+        DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+        DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+      ),
+      firtoolOpts = Array(
+        "-disable-all-randomization",
+        "-strip-debug-info",
+        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
+        "-o",
+        "generated/"
+      )
+    )
+  )
 }
