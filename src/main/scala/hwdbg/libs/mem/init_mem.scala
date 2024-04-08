@@ -91,7 +91,7 @@ object InitMemInline {
     initMemInlineModule.io.dataIn := dataIn
 
     //
-    // Configure the input signals
+    // Configure the output signals
     //
     dataOut := initMemInlineModule.io.dataOut
 

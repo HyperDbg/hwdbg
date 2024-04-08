@@ -13,7 +13,6 @@
   *   This project is released under the GNU Public License v3.
   */
 import chisel3._
-import chisel3.util.Counter
 import circt.stage.ChiselStage
 
 import hwdbg._

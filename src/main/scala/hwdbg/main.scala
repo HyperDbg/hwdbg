@@ -15,7 +15,6 @@
 package hwdbg
 
 import chisel3._
-import chisel3.util.Counter
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
@@ -109,7 +108,7 @@ object DebuggerMain {
     debuggerMainModule.io.rdData := rdData
 
     //
-    // Configure the input signals
+    // Configure the output signals
     //
     outputPin := debuggerMainModule.io.outputPin
     psOutInterrupt := debuggerMainModule.io.psOutInterrupt
