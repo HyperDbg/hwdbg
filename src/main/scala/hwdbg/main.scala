@@ -60,23 +60,17 @@ class DebuggerMain(
   // Instantiate the remote debugger packet interpreter module
   //
   val (
-    outputPin,
     rdWrAddr,
-    wrEna,
-    wrData,
     interpretationDone,
     foundValidPacket,
     requestedActionOfThePacket
   ) =
     DebuggerPacketInterpreter(
       debug,
-      numberOfInputPins,
-      numberOfOutputPins,
       bramAddrWidth,
       bramDataWidth
     )(
       io.en,
-      io.inputPin,
       io.plInSignal,
       io.rdData
     )
@@ -84,10 +78,10 @@ class DebuggerMain(
   //
   // Configure the output signals
   //
-  io.outputPin := outputPin
+  io.outputPin := 0.U
   io.rdWrAddr := rdWrAddr
-  io.wrEna := wrEna
-  io.wrData := wrData
+  io.wrEna := false.B
+  io.wrData := 0.U
   io.psOutInterrupt := false.B // For now, just assert false
 
 }

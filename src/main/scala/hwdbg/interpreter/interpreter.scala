@@ -15,30 +15,36 @@
 package hwdbg.interpreter
 
 import chisel3._
+import chisel3.util.{switch, is}
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
 import hwdbg.types._
 
+object DebuggerPacketInterpreterEnums {
+  object State extends ChiselEnum {
+    val sIdle, sInit = Value
+  }
+}
+
 class DebuggerPacketInterpreter(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-    numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-    numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
 ) extends Module {
+
+  //
+  // Import state enum
+  //
+  import DebuggerPacketInterpreterEnums.State
+  import DebuggerPacketInterpreterEnums.State._
+
   val io = IO(new Bundle {
 
     //
     // Chip signals
     //
     val en = Input(Bool()) // chip enable signal
-
-    //
-    // Input/Output signals
-    //
-    val inputPin = Input(Vec(numberOfInputPins, UInt((1.W)))) // input pins
-    val outputPin = Output(Vec(numberOfOutputPins, UInt((1.W)))) // output pins
 
     //
     // Interrupt signals (lines)
@@ -52,8 +58,6 @@ class DebuggerPacketInterpreter(
     //
     val rdWrAddr = Output(UInt(bramAddrWidth.W)) // read/write address
     val rdData = Input(UInt(bramDataWidth.W)) // read data
-    val wrEna = Output(Bool()) // enable writing
-    val wrData = Output(UInt(bramDataWidth.W)) // write data
 
     //
     // Interpretation signals
@@ -64,6 +68,21 @@ class DebuggerPacketInterpreter(
 
   })
 
+  //
+  // State registers
+  //
+  val state = RegInit(sIdle)
+
+  //
+  // Output pins (registers)
+  //
+  val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
+  val regInterpretationDone = RegInit(false.B)
+  val regFoundValidPacket = RegInit(false.B)
+  val regRequestedActionOfThePacket = RegInit(0.U(32.W))
+
+  // -------------------------------
+
   /*
   val receivedPacketBuffer = Wire(new DebuggerRemotePacket())
   receivedPacketBuffer.key := io.key
@@ -72,23 +91,43 @@ class DebuggerPacketInterpreter(
   io.struct_value := ms.value
    */
 
-  // ------------------------------------------------------------------------------------------------------------
+  switch(state) {
 
-  //
-  // Used for testing verilog generation, should be removed
-  //
-  for (i <- 0 until numberOfOutputPins) {
-    io.outputPin(i) := 0.U
+    is(sIdle) {
+
+      //
+      // Check whether the interrupt from the PS is received or not
+      //
+      when(io.en === true.B && io.plInSignal === true.B) {
+        state := sInit
+      }
+
+      //
+      // Configure the registers in case of sIdle
+      //
+      regRdWrAddr := 0.U
+      regInterpretationDone := false.B
+      regFoundValidPacket := false.B
+      regRequestedActionOfThePacket := 0.U
+
+    }
+    is(sInit) {
+
+      //
+      // Test
+      //
+    }
   }
 
-  io.rdWrAddr := 0.U
-  io.wrEna := false.B
-  io.wrData := 0.U
-  io.interpretationDone := false.B
-  io.foundValidPacket := false.B
-  io.requestedActionOfThePacket := 0.U
+  // ---------------------------------------------------------------------
 
-  // ------------------------------------------------------------------------------------------------------------
+  //
+  // Connect output pins to internal registers
+  //
+  io.rdWrAddr := regRdWrAddr
+  io.interpretationDone := regInterpretationDone
+  io.foundValidPacket := regFoundValidPacket
+  io.requestedActionOfThePacket := regRequestedActionOfThePacket
 
 }
 
@@ -96,31 +135,23 @@ object DebuggerPacketInterpreter {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-      numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-      numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
   )(
       en: Bool,
-      inputPin: Vec[UInt],
       plInSignal: Bool,
       rdData: UInt
-  ): (Vec[UInt], UInt, Bool, UInt, Bool, Bool, UInt) = {
+  ): (UInt, Bool, Bool, UInt) = {
 
     val debuggerPacketInterpreter = Module(
       new DebuggerPacketInterpreter(
         debug,
-        numberOfInputPins,
-        numberOfOutputPins,
         bramAddrWidth,
         bramDataWidth
       )
     )
 
-    val outputPin = Wire(Vec(numberOfOutputPins, UInt((1.W))))
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
-    val wrEna = Wire(Bool())
-    val wrData = Wire(UInt(bramDataWidth.W))
     val interpretationDone = Wire(Bool())
     val foundValidPacket = Wire(Bool())
     val requestedActionOfThePacket = Wire(UInt(32.W))
@@ -129,17 +160,13 @@ object DebuggerPacketInterpreter {
     // Configure the input signals
     //
     debuggerPacketInterpreter.io.en := en
-    debuggerPacketInterpreter.io.inputPin := inputPin
     debuggerPacketInterpreter.io.plInSignal := plInSignal
     debuggerPacketInterpreter.io.rdData := rdData
 
     //
     // Configure the output signals
     //
-    outputPin := debuggerPacketInterpreter.io.outputPin
     rdWrAddr := debuggerPacketInterpreter.io.rdWrAddr
-    wrEna := debuggerPacketInterpreter.io.wrEna
-    wrData := debuggerPacketInterpreter.io.wrData
 
     //
     // Configure the output signals related to interpreted packets
@@ -152,10 +179,7 @@ object DebuggerPacketInterpreter {
     // Return the output result
     //
     (
-      outputPin,
       rdWrAddr,
-      wrEna,
-      wrData,
       interpretationDone,
       foundValidPacket,
       requestedActionOfThePacket
