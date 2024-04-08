@@ -42,9 +42,10 @@ class DebuggerPacketInterpreter(
 
     //
     // Interrupt signals (lines)
+    // Note: Only PL input signal is received here,
+    // a separate module will control the PS signal
     //
     val plInSignal = Input(Bool()) // PS to PL signal
-    val psOutInterrupt = Output(Bool()) // PL to PS interrupt
 
     //
     // BRAM (Block RAM) ports
@@ -71,6 +72,24 @@ class DebuggerPacketInterpreter(
   io.struct_value := ms.value
    */
 
+  // ------------------------------------------------------------------------------------------------------------
+
+  //
+  // Used for testing verilog generation, should be removed
+  //
+  for (i <- 0 until numberOfOutputPins) {
+    io.outputPin(i) := 0.U
+  }
+
+  io.rdWrAddr := 0.U
+  io.wrEna := false.B
+  io.wrData := 0.U
+  io.interpretationDone := false.B
+  io.foundValidPacket := false.B
+  io.requestedActionOfThePacket := 0.U
+
+  // ------------------------------------------------------------------------------------------------------------
+
 }
 
 object DebuggerPacketInterpreter {
@@ -86,7 +105,7 @@ object DebuggerPacketInterpreter {
       inputPin: Vec[UInt],
       plInSignal: Bool,
       rdData: UInt
-  ): (Vec[UInt], Bool, UInt, Bool, UInt, Bool, Bool, UInt) = {
+  ): (Vec[UInt], UInt, Bool, UInt, Bool, Bool, UInt) = {
 
     val debuggerPacketInterpreter = Module(
       new DebuggerPacketInterpreter(
@@ -99,7 +118,6 @@ object DebuggerPacketInterpreter {
     )
 
     val outputPin = Wire(Vec(numberOfOutputPins, UInt((1.W))))
-    val psOutInterrupt = Wire(Bool())
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
     val wrEna = Wire(Bool())
     val wrData = Wire(UInt(bramDataWidth.W))
@@ -119,7 +137,6 @@ object DebuggerPacketInterpreter {
     // Configure the output signals
     //
     outputPin := debuggerPacketInterpreter.io.outputPin
-    psOutInterrupt := debuggerPacketInterpreter.io.psOutInterrupt
     rdWrAddr := debuggerPacketInterpreter.io.rdWrAddr
     wrEna := debuggerPacketInterpreter.io.wrEna
     wrData := debuggerPacketInterpreter.io.wrData
@@ -136,7 +153,6 @@ object DebuggerPacketInterpreter {
     //
     (
       outputPin,
-      psOutInterrupt,
       rdWrAddr,
       wrEna,
       wrData,

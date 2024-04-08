@@ -18,6 +18,7 @@ import chisel3._
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
+import hwdbg.interpreter._
 
 class DebuggerMain(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
@@ -56,16 +57,39 @@ class DebuggerMain(
   })
 
   //
-  // Used for testing verilog generation, should be removed
+  // Instantiate the remote debugger packet interpreter module
   //
-  for (i <- 0 until numberOfOutputPins) {
-    io.outputPin(i) := 0.U
-  }
+  val (
+    outputPin,
+    rdWrAddr,
+    wrEna,
+    wrData,
+    interpretationDone,
+    foundValidPacket,
+    requestedActionOfThePacket
+  ) =
+    DebuggerPacketInterpreter(
+      debug,
+      numberOfInputPins,
+      numberOfOutputPins,
+      bramAddrWidth,
+      bramDataWidth
+    )(
+      io.en,
+      io.inputPin,
+      io.plInSignal,
+      io.rdData
+    )
 
-  io.psOutInterrupt := false.B
-  io.rdWrAddr := 0.U
-  io.wrEna := false.B
-  io.wrData := 0.U
+  //
+  // Configure the output signals
+  //
+  io.outputPin := outputPin
+  io.rdWrAddr := rdWrAddr
+  io.wrEna := wrEna
+  io.wrData := wrData
+  io.psOutInterrupt := false.B // For now, just assert false
+
 }
 
 object DebuggerMain {
