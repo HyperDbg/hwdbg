@@ -20,10 +20,12 @@ import circt.stage.ChiselStage
 
 import hwdbg.configs._
 import hwdbg.types._
+import hwdbg.utils._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
-    val sIdle, sInit = Value
+    val sIdle, sInit, sReadChecksum, sReadIndicator, sReadTypeOfThePacket,
+        sReadRequestedActionOfThePacket, sDone = Value
   }
 }
 
@@ -79,43 +81,143 @@ class DebuggerPacketInterpreter(
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
   val regInterpretationDone = RegInit(false.B)
   val regFoundValidPacket = RegInit(false.B)
-  val regRequestedActionOfThePacket = RegInit(0.U(32.W))
 
-  // -------------------------------
+  //
+  // Structure (as register) of the received packet buffer
+  //
+  val regReceivedPacketBuffer = RegInit(
+    0.U.asTypeOf(new DebuggerRemotePacket())
+  )
 
-  /*
-  val receivedPacketBuffer = Wire(new DebuggerRemotePacket())
-  receivedPacketBuffer.key := io.key
-  receivedPacketBuffer.value := io.value
-  io.struct_key := ms.key
-  io.struct_value := ms.value
-   */
+  //
+  // Apply the chip enable signal
+  //
+  when(io.en === true.B) {
 
-  switch(state) {
+    switch(state) {
 
-    is(sIdle) {
+      is(sIdle) {
 
-      //
-      // Check whether the interrupt from the PS is received or not
-      //
-      when(io.en === true.B && io.plInSignal === true.B) {
-        state := sInit
+        //
+        // Create logs from communication structure offsets
+        //
+        LogInfo(debug)(
+          f"The offset of Checksum is 0x${regReceivedPacketBuffer.Offset.checksum}%x"
+        )
+        LogInfo(debug)(
+          f"The offset of Indicator is 0x${regReceivedPacketBuffer.Offset.indicator}%x"
+        )
+        LogInfo(debug)(
+          f"The offset of TypeOfThePacket is 0x${regReceivedPacketBuffer.Offset.typeOfThePacket}%x"
+        )
+        LogInfo(debug)(
+          f"The offset of RequestedActionOfThePacket is 0x${regReceivedPacketBuffer.Offset.requestedActionOfThePacket}%x"
+        )
+
+        //
+        // Check whether the interrupt from the PS is received or not
+        //
+        when(io.plInSignal === true.B) {
+          state := sInit
+        }
+
+        //
+        // Configure the registers in case of sIdle
+        //
+        regRdWrAddr := 0.U
+        regInterpretationDone := false.B
+        regFoundValidPacket := false.B
+        regReceivedPacketBuffer.RequestedActionOfThePacket := 0.U
+
       }
+      is(sInit) {
 
-      //
-      // Configure the registers in case of sIdle
-      //
-      regRdWrAddr := 0.U
-      regInterpretationDone := false.B
-      regFoundValidPacket := false.B
-      regRequestedActionOfThePacket := 0.U
+        //
+        // Adjust address to read Checksum from BRAM
+        //
+        regRdWrAddr := regReceivedPacketBuffer.Offset.checksum.U
 
-    }
-    is(sInit) {
+        //
+        // Goes to the next section
+        //
+        state := sReadChecksum
+      }
+      is(sReadChecksum) {
 
-      //
-      // Test
-      //
+        //
+        // Read the Checksum
+        //
+        regReceivedPacketBuffer.Checksum := io.rdData
+
+        //
+        // Adjust address to read Indicator from BRAM
+        //
+        regRdWrAddr := regReceivedPacketBuffer.Offset.indicator.U
+
+        //
+        // Goes to the next section
+        //
+        state := sReadIndicator
+      }
+      is(sReadIndicator) {
+
+        //
+        // Read the Indicator
+        //
+        regReceivedPacketBuffer.Indicator := io.rdData
+
+        //
+        // Adjust address to read TypeOfThePacket from BRAM
+        //
+        regRdWrAddr := regReceivedPacketBuffer.Offset.typeOfThePacket.U
+
+        //
+        // Goes to the next section
+        //
+        state := sReadTypeOfThePacket
+      }
+      is(sReadTypeOfThePacket) {
+
+        //
+        // Read the TypeOfThePacket
+        //
+        regReceivedPacketBuffer.TypeOfThePacket := io.rdData
+
+        //
+        // Adjust address to read RequestedActionOfThePacket from BRAM
+        //
+        regRdWrAddr := regReceivedPacketBuffer.Offset.requestedActionOfThePacket.U
+
+        //
+        // Goes to the next section
+        //
+        state := sReadRequestedActionOfThePacket
+      }
+      is(sReadRequestedActionOfThePacket) {
+
+        //
+        // Read the RequestedActionOfThePacket
+        //
+        regReceivedPacketBuffer.RequestedActionOfThePacket := io.rdData
+
+        //
+        // Reading all values
+        //
+        state := sDone
+      }
+      is(sDone) {
+
+        //
+        // Adjust the output bits
+        //
+        regInterpretationDone := true.B
+        regFoundValidPacket := true.B
+
+        //
+        // Go to the idle state
+        //
+        state := sIdle
+      }
     }
   }
 
@@ -127,7 +229,7 @@ class DebuggerPacketInterpreter(
   io.rdWrAddr := regRdWrAddr
   io.interpretationDone := regInterpretationDone
   io.foundValidPacket := regFoundValidPacket
-  io.requestedActionOfThePacket := regRequestedActionOfThePacket
+  io.requestedActionOfThePacket := regReceivedPacketBuffer.RequestedActionOfThePacket
 
 }
 

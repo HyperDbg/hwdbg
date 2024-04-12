@@ -78,7 +78,10 @@ class DebuggerMain(
   //
   // Configure the output signals
   //
-  io.outputPin := 0.U
+  for (i <- 0 until numberOfOutputPins) {
+    io.outputPin(i) := 0.U
+  }
+
   io.rdWrAddr := rdWrAddr
   io.wrEna := false.B
   io.wrData := 0.U
