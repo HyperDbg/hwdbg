@@ -64,7 +64,7 @@ class DebuggerModuleTestingBRAM(
   // Instantiate the BRAM memory initializer module
   //
   val dataOut =
-    InitMemInline(
+    InitMemContent(
       debug,
       TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       bramAddrWidth,

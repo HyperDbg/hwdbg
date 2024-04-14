@@ -82,11 +82,20 @@ class DebuggerMain(
     io.outputPin(i) := requestedActionOfThePacket(i)
   }
 
-  io.rdWrAddr := rdWrAddr
-  io.wrEna := false.B
-  io.wrData := 0.U
-  io.psOutInterrupt := false.B // For now, just assert false
+  //
+  // Used to force chisel not to ignore the write pin of BRAM
+  //
+  when(interpretationDone && foundValidPacket) {
+    io.wrEna := true.B
+    io.wrData := requestedActionOfThePacket
 
+  }.otherwise {
+    io.wrEna := false.B
+    io.wrData := 0.U
+  }
+
+  io.rdWrAddr := rdWrAddr
+  io.psOutInterrupt := false.B // For now, just assert false
 }
 
 object DebuggerMain {
