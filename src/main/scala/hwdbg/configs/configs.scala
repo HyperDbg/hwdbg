@@ -30,12 +30,12 @@ object DebuggerConfigurations {
   //
   // Number of input pins
   //
-  val NUMBER_OF_INPUT_PINS: Int = 16
+  val NUMBER_OF_INPUT_PINS: Int = 32
 
   //
   // Number of output pins
   //
-  val NUMBER_OF_OUTPUT_PINS: Int = 16
+  val NUMBER_OF_OUTPUT_PINS: Int = 32
 
   //
   // Address width of the Block RAM (BRAM)

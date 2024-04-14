@@ -79,7 +79,7 @@ class DebuggerMain(
   // Configure the output signals
   //
   for (i <- 0 until numberOfOutputPins) {
-    io.outputPin(i) := 0.U
+    io.outputPin(i) := requestedActionOfThePacket(i)
   }
 
   io.rdWrAddr := rdWrAddr
