@@ -66,5 +66,5 @@ object GeneralConfigurations {
 object TestingConfigurations {
 
   val BRAM_INITIALIZATION_FILE_PATH: String =
-    "/home/sina/HyperDbg/hwdbg/src/resources/8kb_BRAM.hex.txt"
+    "./src/resources/8kb_BRAM.hex.txt"
 }

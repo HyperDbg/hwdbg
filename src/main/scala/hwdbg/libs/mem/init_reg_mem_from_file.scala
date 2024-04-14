@@ -1,9 +1,9 @@
 /** @file
-  *   init_mem_content.scala
+  *   init_reg_mem_from_file.scala
   * @author
   *   Sina Karvandi (sina@hyperdbg.org)
   * @brief
-  *   Initialize SRAM memory from a file (directly from the content of file)
+  *   Initialize registers from a file
   * @details
   * @version 0.1
   * @date
@@ -19,23 +19,37 @@ import scala.io.Source
 
 import chisel3._
 
+import hwdbg.utils._
 import hwdbg.configs._
 
-object Tools {
-  def readmemh(path: String, width: Int): Seq[UInt] = {
+object InitRegMemFromFileTools {
+  def readmemh(
+      debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+      path: String,
+      width: Int
+  ): Seq[UInt] = {
+
     val buffer = new ArrayBuffer[UInt]
     for (line <- Source.fromFile(path).getLines()) {
       val tokens: Array[String] = line.split("(//)").map(_.trim)
       if (tokens.nonEmpty && tokens.head != "") {
+
         val i = Integer.parseInt(tokens.head, 16)
+
+        LogInfo(debug)(
+          f"Initialize memory with 0x${i}%x"
+        )
+
         buffer.append(i.U(width.W))
       }
     }
+
     buffer.toSeq
+
   }
 }
 
-class InitMemContent(
+class InitRegMemFromFile(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
     addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
@@ -52,7 +66,9 @@ class InitMemContent(
     val dataOut = Output(UInt(width.W))
   })
 
-  val mem = RegInit(VecInit(Tools.readmemh(memoryFile, width)))
+  val mem = RegInit(
+    VecInit(InitRegMemFromFileTools.readmemh(debug, memoryFile, width))
+  )
 
   when(io.enable) {
     val rdwrPort = mem(io.addr)
@@ -66,7 +82,7 @@ class InitMemContent(
   }
 }
 
-object InitMemContent {
+object InitRegMemFromFile {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
@@ -82,8 +98,8 @@ object InitMemContent {
       dataIn: UInt
   ): UInt = {
 
-    val initMemContentModule = Module(
-      new InitMemContent(
+    val initRegMemFromFileModule = Module(
+      new InitRegMemFromFile(
         debug,
         memoryFile,
         addrWidth,
@@ -97,15 +113,15 @@ object InitMemContent {
     //
     // Configure the input signals
     //
-    initMemContentModule.io.enable := enable
-    initMemContentModule.io.write := write
-    initMemContentModule.io.addr := addr
-    initMemContentModule.io.dataIn := dataIn
+    initRegMemFromFileModule.io.enable := enable
+    initRegMemFromFileModule.io.write := write
+    initRegMemFromFileModule.io.addr := addr
+    initRegMemFromFileModule.io.dataIn := dataIn
 
     //
     // Configure the output signals
     //
-    dataOut := initMemContentModule.io.dataOut
+    dataOut := initRegMemFromFileModule.io.dataOut
 
     //
     // Return the output result
