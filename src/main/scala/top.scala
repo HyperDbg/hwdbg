@@ -12,6 +12,8 @@
   * @copyright
   *   This project is released under the GNU Public License v3.
   */
+package hwdbg
+
 import chisel3._
 import circt.stage.ChiselStage
 
