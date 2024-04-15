@@ -134,10 +134,9 @@ object MainWithInitializedBRAM extends App {
       ),
       firtoolOpts = Array(
         "-disable-all-randomization",
-        "-strip-debug-info",
-        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
+        // "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
         "-o",
-        "generated/"
+        "generated/DebuggerModuleTestingBRAM.sv"
       )
     )
   )

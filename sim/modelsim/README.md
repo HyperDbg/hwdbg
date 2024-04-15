@@ -8,16 +8,16 @@ In the "modelsim.config" file, the first line that starts with "module:" is the 
 
 For example:
 ```
-module:MinMaxParallelOnlineComparatorTest
+module:DebuggerModuleTest
 clock
-maxOutput_3 
+inputPin 
 ```
 
 If you don't specify the signals to be filtered, then **ALL** signals will be shown.
 
 For example:
 ```
-module:MinMaxParallelOnlineComparatorTest
+module:DebuggerModuleTest
 ```
 
 At last, run it with the following command:

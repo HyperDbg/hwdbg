@@ -1,7 +1,7 @@
 # Makefile
 
 TOPLEVEL_LANG = verilog
-VERILOG_SOURCES = $(shell pwd)/../../../generated/DebuggerModuleTestingBRAM.sv
+VERILOG_SOURCES = $(shell pwd)/../generated/DebuggerModuleTestingBRAM.sv
 TOPLEVEL = DebuggerModuleTestingBRAM
 MODULE = test_DebuggerModuleTestingBRAM
 

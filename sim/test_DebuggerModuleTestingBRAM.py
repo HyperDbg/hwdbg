@@ -28,6 +28,22 @@ async def DebuggerModuleTestingBRAM_test(dut):
     assert LogicArray(dut.io_outputPin_13.value) == LogicArray("X")
     assert LogicArray(dut.io_outputPin_14.value) == LogicArray("X")
     assert LogicArray(dut.io_outputPin_15.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_16.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_17.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_18.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_19.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_20.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_21.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_22.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_23.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_24.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_25.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_26.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_27.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_28.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_29.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_30.value) == LogicArray("X")
+    assert LogicArray(dut.io_outputPin_31.value) == LogicArray("X")
         
     # Set initial input value to prevent it from floating
     dut.io_inputPin_0.value = 0
@@ -46,6 +62,22 @@ async def DebuggerModuleTestingBRAM_test(dut):
     dut.io_inputPin_13.value = 0
     dut.io_inputPin_14.value = 0
     dut.io_inputPin_15.value = 0
+    dut.io_inputPin_16.value = 0
+    dut.io_inputPin_17.value = 0
+    dut.io_inputPin_18.value = 0
+    dut.io_inputPin_19.value = 0
+    dut.io_inputPin_20.value = 0
+    dut.io_inputPin_21.value = 0
+    dut.io_inputPin_22.value = 0
+    dut.io_inputPin_23.value = 0
+    dut.io_inputPin_24.value = 0
+    dut.io_inputPin_25.value = 0
+    dut.io_inputPin_26.value = 0
+    dut.io_inputPin_27.value = 0
+    dut.io_inputPin_28.value = 0
+    dut.io_inputPin_29.value = 0
+    dut.io_inputPin_30.value = 0
+    dut.io_inputPin_31.value = 0
 
     clock = Clock(dut.clock, 10, units="ns")  # Create a 10ns period clock on port clock
     
