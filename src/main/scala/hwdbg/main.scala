@@ -25,8 +25,27 @@ class DebuggerMain(
     numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
     numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+    inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
+    outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
 ) extends Module {
+
+  //
+  // Ensure sum of input port values equals numberOfInputPins (NUMBER_OF_INPUT_PINS)
+  //
+  require(
+    inputPortsConfiguration.values.sum == numberOfInputPins,
+    "err, the sum of the inputPortsConfiguration (PORT_PINS_MAP_INPUT) values must equal the numberOfInputPins (NUMBER_OF_INPUT_PINS)."
+  )
+
+  //
+  // Ensure sum of output port values equals numberOfOutputPins (NUMBER_OF_OUTPUT_PINS)
+  //
+  require(
+    outputPortsConfiguration.values.sum == numberOfOutputPins,
+    "err, the sum of the outputPortsConfiguration (PORT_PINS_MAP_OUTPUT) values must equal the numberOfOutputPins (NUMBER_OF_OUTPUT_PINS)."
+  )
+
   val io = IO(new Bundle {
 
     //
@@ -105,7 +124,11 @@ object DebuggerMain {
       numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
       numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+      inputPortsConfiguration: Map[Int, Int] =
+        DebuggerPorts.PORT_PINS_MAP_INPUT,
+      outputPortsConfiguration: Map[Int, Int] =
+        DebuggerPorts.PORT_PINS_MAP_OUTPUT
   )(
       en: Bool,
       inputPin: Vec[UInt],
@@ -119,7 +142,9 @@ object DebuggerMain {
         numberOfInputPins,
         numberOfOutputPins,
         bramAddrWidth,
-        bramDataWidth
+        bramDataWidth,
+        inputPortsConfiguration,
+        outputPortsConfiguration
       )
     )
 

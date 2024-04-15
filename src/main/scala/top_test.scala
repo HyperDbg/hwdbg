@@ -26,7 +26,9 @@ class DebuggerModuleTestingBRAM(
     numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
     numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+    inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
+    outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
 ) extends Module {
   val io = IO(new Bundle {
 
@@ -88,7 +90,9 @@ class DebuggerModuleTestingBRAM(
       numberOfInputPins,
       numberOfOutputPins,
       bramAddrWidth,
-      bramDataWidth
+      bramDataWidth,
+      inputPortsConfiguration,
+      outputPortsConfiguration
     )(
       io.en,
       io.inputPin,
@@ -124,7 +128,9 @@ object MainWithInitializedBRAM extends App {
         DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
         DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
         DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+        DebuggerPorts.PORT_PINS_MAP_INPUT,
+        DebuggerPorts.PORT_PINS_MAP_OUTPUT
       ),
       firtoolOpts = Array(
         "-disable-all-randomization",
