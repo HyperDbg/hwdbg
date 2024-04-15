@@ -9,7 +9,7 @@ from cocotb.types import LogicArray
 
 @cocotb.test()
 async def DebuggerModuleTestingBRAM_test(dut):
-    """Test that d propagates to q"""
+    """Test hwdbg module (with pre-defined BRAM)"""
 
     # Assert initial output is unknown
     assert LogicArray(dut.io_outputPin_0.value) == LogicArray("X")
@@ -44,23 +44,48 @@ async def DebuggerModuleTestingBRAM_test(dut):
     assert LogicArray(dut.io_outputPin_29.value) == LogicArray("X")
     assert LogicArray(dut.io_outputPin_30.value) == LogicArray("X")
     assert LogicArray(dut.io_outputPin_31.value) == LogicArray("X")
-        
+
+    clock = Clock(dut.clock, 10, units="ns")  # Create a 10ns period clock on port clock
+    
+    # Start the clock. Start it low to avoid issues on the first RisingEdge
+    cocotb.start_soon(clock.start(start_high=False))
+    
+    dut._log.info("Initialize and reset module")
+
+    # Initial values
+    dut.io_en.value = 0
+    dut.io_plInSignal.value = 0
+   
+    # Reset DUT
+    dut.reset.value = 1
+    for _ in range(10):
+        await RisingEdge(dut.clock)
+    dut.reset.value = 0
+
+    dut._log.info("Enabling an interrupting chip to interpret commands from BRAM")
+
+    # Enable chip
+    dut.io_en.value = 1
+
+    # Tell the hwdbg to interpret BRAM results
+    dut.io_plInSignal.value = 1
+
     # Set initial input value to prevent it from floating
-    dut.io_inputPin_0.value = 0
+    dut.io_inputPin_0.value = 1
     dut.io_inputPin_1.value = 0
-    dut.io_inputPin_2.value = 0
+    dut.io_inputPin_2.value = 1
     dut.io_inputPin_3.value = 0
-    dut.io_inputPin_4.value = 0
+    dut.io_inputPin_4.value = 1
     dut.io_inputPin_5.value = 0
-    dut.io_inputPin_6.value = 0
+    dut.io_inputPin_6.value = 1
     dut.io_inputPin_7.value = 0
-    dut.io_inputPin_8.value = 0
+    dut.io_inputPin_8.value = 1
     dut.io_inputPin_9.value = 0
-    dut.io_inputPin_10.value = 0
+    dut.io_inputPin_10.value = 1
     dut.io_inputPin_11.value = 0
-    dut.io_inputPin_12.value = 0
+    dut.io_inputPin_12.value = 1
     dut.io_inputPin_13.value = 0
-    dut.io_inputPin_14.value = 0
+    dut.io_inputPin_14.value = 1
     dut.io_inputPin_15.value = 0
     dut.io_inputPin_16.value = 0
     dut.io_inputPin_17.value = 0
@@ -71,18 +96,13 @@ async def DebuggerModuleTestingBRAM_test(dut):
     dut.io_inputPin_22.value = 0
     dut.io_inputPin_23.value = 0
     dut.io_inputPin_24.value = 0
-    dut.io_inputPin_25.value = 0
-    dut.io_inputPin_26.value = 0
-    dut.io_inputPin_27.value = 0
-    dut.io_inputPin_28.value = 0
-    dut.io_inputPin_29.value = 0
-    dut.io_inputPin_30.value = 0
-    dut.io_inputPin_31.value = 0
-
-    clock = Clock(dut.clock, 10, units="ns")  # Create a 10ns period clock on port clock
-    
-    # Start the clock. Start it low to avoid issues on the first RisingEdge
-    cocotb.start_soon(clock.start(start_high=False))
+    dut.io_inputPin_25.value = 1
+    dut.io_inputPin_26.value = 1
+    dut.io_inputPin_27.value = 1
+    dut.io_inputPin_28.value = 1
+    dut.io_inputPin_29.value = 1
+    dut.io_inputPin_30.value = 1
+    dut.io_inputPin_31.value = 1
 
     # Synchronize with the clock. This will regisiter the initial `inputPinX` value
     await RisingEdge(dut.clock)
