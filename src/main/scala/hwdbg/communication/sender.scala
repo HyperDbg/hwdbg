@@ -69,9 +69,142 @@ class DebuggerPacketSender(
     //
     val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
     val sendingSignalDone = Output(Bool()) // sending signal done or not?
-    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().getWidth.W)) // the requested action
+    val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().getWidth.W)) // the requested action
     val sendingDataArray = Input(Vec(lengthOfDataSendingArray, UInt((bramDataWidth.W)))) // data to be sent to the debugger
 
   })
 
+  //
+  // State registers
+  //
+  val state = RegInit(sIdle)
+
+  //
+  // Output pins (registers)
+  //
+  val regPsOutInterrupt = RegInit(false.B)
+  val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
+  val regWrEna = RegInit(false.B)
+  val regWrData = RegInit(0.U(bramDataWidth.W))
+  val regSendingSignalDone = RegInit(false.B)
+
+  //
+  // Rising-edge detector for start sending signal
+  //
+  val risingEdgeBeginSendingBuffer = io.beginSendingBuffer & !RegNext(io.beginSendingBuffer)
+
+  //
+  // Structure (as wire) of the received packet buffer
+  //
+  val sendingPacketBuffer = WireInit(0.U.asTypeOf(new DebuggerRemotePacket()))
+
+  //
+  // Apply the chip enable signal
+  //
+  when(io.en === true.B) {
+
+    switch(state) {
+
+      is(sIdle) {
+
+        //
+        // Check whether the interrupt from the PS is received or not
+        //
+        when(risingEdgeBeginSendingBuffer === true.B) {
+          state := sInit
+        }
+
+        //
+        // Configure the registers in case of sIdle
+        //
+        regPsOutInterrupt := false.B
+        regRdWrAddr := 0.U
+        regWrEna := false.B
+        regWrData := 0.U
+        regSendingSignalDone := false.B
+
+      }
+      is(sInit) {}
+      is(sDone) {
+
+        //
+        // Adjust the output bits
+        //
+        regSendingSignalDone := true.B
+
+        //
+        // Go to the idle state
+        //
+        state := sIdle
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------
+
+  //
+  // Connect output pins to internal registers
+  //
+  io.psOutInterrupt := regPsOutInterrupt
+  io.rdWrAddr := regRdWrAddr
+  io.wrEna := regWrEna
+  io.wrData := regWrData
+  io.sendingSignalDone := regSendingSignalDone
+}
+
+object DebuggerPacketSender {
+
+  def apply(
+      debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+      bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+      lengthOfDataSendingArray: Int = DebuggerConfigurations.LENGTH_OF_DATA_SENDING_ARRAY
+  )(
+      en: Bool,
+      beginSendingBuffer: Bool,
+      requestedActionOfThePacket: UInt,
+      sendingDataArray: Vec[UInt]
+  ): (Bool, UInt, Bool, UInt, Bool) = {
+
+    val debuggerPacketSender = Module(
+      new DebuggerPacketSender(
+        debug,
+        bramAddrWidth,
+        bramDataWidth,
+        lengthOfDataSendingArray
+      )
+    )
+
+    val psOutInterrupt = Wire(Bool())
+    val rdWrAddr = Wire(UInt(bramAddrWidth.W))
+    val wrEna = Wire(Bool())
+    val wrData = Wire(UInt(bramDataWidth.W))
+    val sendingSignalDone = Wire(Bool())
+
+    //
+    // Configure the input signals
+    //
+    debuggerPacketSender.io.en := en
+    debuggerPacketSender.io.beginSendingBuffer := beginSendingBuffer
+    debuggerPacketSender.io.requestedActionOfThePacket := requestedActionOfThePacket
+    debuggerPacketSender.io.sendingDataArray := sendingDataArray
+
+    //
+    // Configure the output signals
+    //
+    psOutInterrupt := debuggerPacketSender.io.psOutInterrupt
+    rdWrAddr := debuggerPacketSender.io.rdWrAddr
+    wrEna := debuggerPacketSender.io.wrEna
+    wrData := debuggerPacketSender.io.wrData
+
+    //
+    // Configure the output signals related to sending packets
+    //
+    sendingSignalDone := debuggerPacketSender.io.sendingSignalDone
+
+    //
+    // Return the output result
+    //
+    (psOutInterrupt, rdWrAddr, wrEna, wrData, sendingSignalDone)
+  }
 }
