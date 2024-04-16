@@ -31,3 +31,36 @@ object HyperDbgSharedConstants {
     0x4859504552444247L // HYPERDBG = 0x4859504552444247
 
 }
+
+/** @brief
+  *   Enumeration for different packet types in HyperDbg packets
+  * @warning
+  *   Used in HyperDbg
+  */
+object DEBUGGER_REMOTE_PACKET_TYPE extends Enumeration {
+
+  //
+  // Debugger to debuggee (vmx-root)
+  //
+  val DEBUGGER_TO_DEBUGGEE_EXECUTE_ON_VMX_ROOT = Value(1)
+
+  //
+  // Debugger to debuggee (user-mode)
+  //
+  val DEBUGGER_TO_DEBUGGEE_EXECUTE_ON_USER_MODE = Value(2)
+
+  //
+  // Debuggee to debugger (user-mode and kernel-mode, vmx-root mode)
+  //
+  val DEBUGGEE_TO_DEBUGGER = Value(3)
+
+  //
+  // Debugger to debuggee (hardware), used in hwdbg
+  //
+  val DEBUGGER_TO_DEBUGGEE_HARDWARE_LEVEL = Value(4)
+
+  //
+  // Debuggee to debugger (hardware), used in hwdbg
+  //
+  val DEBUGGEE_TO_DEBUGGER_HARDWARE_LEVEL = Value(5)
+}

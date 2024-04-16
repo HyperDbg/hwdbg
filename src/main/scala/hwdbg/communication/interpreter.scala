@@ -12,7 +12,7 @@
   * @copyright
   *   This project is released under the GNU Public License v3.
   */
-package hwdbg.interpreter
+package hwdbg.communication
 
 import chisel3._
 import chisel3.util.{switch, is}
@@ -67,7 +67,9 @@ class DebuggerPacketInterpreter(
     //
     val interpretationDone = Output(Bool()) // interpretation done or not?
     val foundValidPacket = Output(Bool()) // packet was valid or not
-    val requestedActionOfThePacket = Output(UInt(32.W)) // the requested action
+    val requestedActionOfThePacket = Output(
+      UInt(new DebuggerRemotePacket().getWidth.W)
+    ) // the requested action
 
   })
 
@@ -301,7 +303,9 @@ object DebuggerPacketInterpreter {
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
     val interpretationDone = Wire(Bool())
     val foundValidPacket = Wire(Bool())
-    val requestedActionOfThePacket = Wire(UInt(32.W))
+    val requestedActionOfThePacket = Wire(
+      UInt(new DebuggerRemotePacket().getWidth.W)
+    )
 
     //
     // Configure the input signals

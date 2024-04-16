@@ -18,7 +18,7 @@ import chisel3._
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
-import hwdbg.interpreter._
+import hwdbg.communication._
 
 class DebuggerMain(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
