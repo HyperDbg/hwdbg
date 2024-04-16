@@ -5,13 +5,18 @@
 <p align="left">
 <a href="https://hwdbg.hyperdbg.org"><img src="https://raw.githubusercontent.com/HyperDbg/graphics/master/Badges/Link-Website-orange.svg" alt="Website"></a>
 <a href="https://hwdbg.hyperdbg.org/docs"><img src="https://raw.githubusercontent.com/HyperDbg/graphics/master/Badges/Link-Docs-yellow.svg" alt="Docs"></a>
+<a href="https://hwdbg.hyperdbg.org/api"><img src="https://raw.githubusercontent.com/HyperDbg/graphics/master/Badges/Link-API-green.svg" alt="API"></a>
 <a href="https://research.hyperdbg.org"><img src="https://raw.githubusercontent.com/HyperDbg/graphics/master/Badges/Link-Research-pink.svg" alt="Published Researches"></a>
 <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://raw.githubusercontent.com/HyperDbg/graphics/master/Badges/License-GPLv3-blue.svg" alt="License"></a>
 </p>
 
 ## Description
 
-**hwdbg** is a chip-level debugger designed for black-box chip fuzzing and reverse engineering. It is written in Chisel and Verilog. (⚠️ This project is a work in progress and is not yet ready for testing.)
+**hwdbg** is a chip-level debugger designed for black-box chip fuzzing and reverse engineering. It is written in Chisel and Verilog.
+
+- ⚠️ This project is a work in progress and is not yet ready for testing.
+
+**hwdbg** is a highly customizable debugger designed to ease hardware debugging by bringing software debugging concepts into the hardware debugging domain. **hwdbg** aims to help with the complexities associated with debugging hardware, including chips and IP cores. Key features of **hwdbg** include the ability to step through the hardware design at the clock-cycle level, visualize waveforms, inspect values (e.g., like a logical analyzer), and modify signals. Moreover, it is synthesizable into [FPGAs](https://github.com/HyperDbg/hwdbg-fpga) and has the potential for fabrication into physical chips.
 
 ## Deployment Board 
 
@@ -32,14 +37,14 @@ After selecting the appropriate class for synthesis (option `1`) or simulation (
 ```sh
 $ sbt run
 [info] welcome to sbt 1.9.7 (Eclipse Adoptium Java 17.0.10)
-[info] loading settings for project hwdbg-build-build-build from metals.sbt ...
-[info] loading project definition from /home/sina/HyperDbg/hwdbg/project/project/project
-[info] loading settings for project hwdbg-build-build from metals.sbt ...
-[info] loading project definition from /home/sina/HyperDbg/hwdbg/project/project
-[success] Generated .bloop/hwdbg-build-build.json
+[info] loading settings for project -build-build-build from metals.sbt ...
+[info] loading project definition from /home/sina/HyperDbg//project/project/project
+[info] loading settings for project -build-build from metals.sbt ...
+[info] loading project definition from /home/sina/HyperDbg//project/project
+[success] Generated .bloop/-build-build.json
 [success] Total time: 1 s, completed Apr 16, 2024, 1:49:05 PM
-[info] loading settings for project hwdbg-build from metals.sbt,plugins.sbt ...
-[info] loading project definition from /home/sina/HyperDbg/hwdbg/project
+[info] loading settings for project -build from metals.sbt,plugins.sbt ...
+[info] loading project definition from /home/sina/HyperDbg//project
 [success] Total time: 0 s, completed Apr 16, 2024, 1:49:05 PM
 [info] loading settings for project root from build.sbt ...
 [info] set current project to hwdbg (in build file:/home/sina/HyperDbg/hwdbg/)
@@ -73,6 +78,16 @@ gtkwave ./sim_build/DebuggerModuleTestingBRAM.fst
 ### ModelSim
 
 If you prefer to use ModelSim instead of GTKWave, you can configure the `modelsim.config` file. Please visit <a href="https://github.com/HyperDbg/hwdbg/blob/main/sim/modelsim/README.md">here</a> for more information.
+
+## API
+
+If you want to create the latest version of API documentation, you can run the following command:
+
+```sh
+$ sbt doc
+```
+
+This will generate documentation at `./target/scala-{version}/api/index.html`.
 
 ## License
 
