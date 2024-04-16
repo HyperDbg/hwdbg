@@ -1,17 +1,18 @@
-/** @file
-  *   init_mem.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   Initialize SRAM memory from a file
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-03
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   init_mem.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Initialize SRAM memory from a file
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-03
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg.libs.mem
 
 import chisel3._
@@ -24,8 +25,7 @@ class InitMemInline(
     memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
     addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    size: Int =
-      GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+    size: Int = GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
 ) extends Module {
 
   val io = IO(new Bundle {
@@ -49,8 +49,11 @@ class InitMemInline(
 
   when(io.enable) {
     val rdwrPort = mem(io.addr)
-    when(io.write) { rdwrPort := io.dataIn }
-      .otherwise { io.dataOut := rdwrPort }
+    when(io.write) {
+      rdwrPort := io.dataIn
+    }.otherwise {
+      io.dataOut := rdwrPort
+    }
   }
 }
 
@@ -61,8 +64,7 @@ object InitMemInline {
       memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      size: Int =
-        GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+      size: Int = GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
   )(
       enable: Bool,
       write: Bool,

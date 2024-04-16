@@ -1,17 +1,18 @@
-/** @file
-  *   init_reg_mem_from_file.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   Initialize registers from a file
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-14
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   init_reg_mem_from_file.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Initialize registers from a file
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-14
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg.libs.mem
 
 import scala.collection.mutable.ArrayBuffer
@@ -54,8 +55,7 @@ class InitRegMemFromFile(
     memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
     addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    size: Int =
-      GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+    size: Int = GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
 ) extends Module {
 
   val io = IO(new Bundle {
@@ -66,9 +66,7 @@ class InitRegMemFromFile(
     val dataOut = Output(UInt(width.W))
   })
 
-  val mem = RegInit(
-    VecInit(InitRegMemFromFileTools.readmemh(debug, memoryFile, width))
-  )
+  val mem = RegInit(VecInit(InitRegMemFromFileTools.readmemh(debug, memoryFile, width)))
 
   //
   // This because the address of the saved registers are using 4 bytes granularities
@@ -95,8 +93,7 @@ object InitRegMemFromFile {
       memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      size: Int =
-        GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+      size: Int = GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
   )(
       enable: Bool,
       write: Bool,

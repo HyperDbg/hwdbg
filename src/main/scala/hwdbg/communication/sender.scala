@@ -1,17 +1,18 @@
-/** @file
-  *   sender.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   Remote debugger packet sender module
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-16
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   sender.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Remote debugger packet sender module
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-16
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg.communication
 
 import chisel3._
@@ -32,7 +33,8 @@ object DebuggerPacketSenderEnums {
 class DebuggerPacketSender(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+    lengthOfDataSendingArray: Int = DebuggerConfigurations.LENGTH_OF_DATA_SENDING_ARRAY
 ) extends Module {
 
   //
@@ -65,12 +67,10 @@ class DebuggerPacketSender(
     //
     // Sending signals
     //
+    val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
     val sendingSignalDone = Output(Bool()) // sending signal done or not?
-    val foundValidPacket = Output(Bool()) // packet was valid or not
-    val requestedActionOfThePacket =
-      Output(
-        UInt(new DebuggerRemotePacket().getWidth.W)
-      ) // the requested action
+    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().getWidth.W)) // the requested action
+    val sendingDataArray = Input(Vec(lengthOfDataSendingArray, UInt((bramDataWidth.W)))) // data to be sent to the debugger
 
   })
 

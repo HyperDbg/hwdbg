@@ -1,25 +1,27 @@
-/** @file
-  *   configs.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   Configuration files
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-03
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   configs.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Configuration files
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-03
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg.configs
 
 import chisel3._
 import chisel3.util._
 
-/** @brief
-  *   The configuration of ports and pins
-  */
+/**
+ * @brief
+ *   The configuration of ports and pins
+ */
 object DebuggerPorts {
 
   //
@@ -40,14 +42,14 @@ object DebuggerPorts {
   //                port 1 (out) -> contains 9 pins
   //                port 2 (out) -> contains 11 pins
   //
-  val PORT_PINS_MAP_OUTPUT: Map[Int, Int] =
-    Map(0 -> 4, 1 -> 7, 2 -> 11, 3 -> 10)
+  val PORT_PINS_MAP_OUTPUT: Map[Int, Int] = Map(0 -> 4, 1 -> 7, 2 -> 11, 3 -> 10)
 
 }
 
-/** @brief
-  *   Design constants
-  */
+/**
+ * @brief
+ *   Design constants
+ */
 object DebuggerConfigurations {
 
   //
@@ -75,11 +77,17 @@ object DebuggerConfigurations {
   //
   val BLOCK_RAM_DATA_WIDTH: Int = 32
 
+  //
+  // Maximum number of data to send to the debuggee
+  //
+  val LENGTH_OF_DATA_SENDING_ARRAY: Int = 4
+
 }
 
-/** @brief
-  *   The constants for configuration
-  */
+/**
+ * @brief
+ *   The constants for configuration
+ */
 object GeneralConfigurations {
 
   //

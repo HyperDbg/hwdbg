@@ -1,17 +1,18 @@
-/** @file
-  *   main.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   hwdbg's main debugger module
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-04
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   main.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   hwdbg's main debugger module
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-04
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg
 
 import chisel3._
@@ -78,12 +79,7 @@ class DebuggerMain(
   //
   // Instantiate the remote debugger packet interpreter module
   //
-  val (
-    rdWrAddr,
-    interpretationDone,
-    foundValidPacket,
-    requestedActionOfThePacket
-  ) =
+  val (rdWrAddr, interpretationDone, foundValidPacket, requestedActionOfThePacket) =
     DebuggerPacketInterpreter(
       debug,
       bramAddrWidth,
@@ -170,10 +166,8 @@ object DebuggerMain {
       numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      inputPortsConfiguration: Map[Int, Int] =
-        DebuggerPorts.PORT_PINS_MAP_INPUT,
-      outputPortsConfiguration: Map[Int, Int] =
-        DebuggerPorts.PORT_PINS_MAP_OUTPUT
+      inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
+      outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
   )(
       en: Bool,
       inputPin: Vec[UInt],

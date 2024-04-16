@@ -1,17 +1,18 @@
-/** @file
-  *   communication.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   Data types for the communication
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-08
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   communication.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Data types for the communication
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-08
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg.types
 
 import chisel3._
@@ -29,9 +30,10 @@ import chisel3._
 // } DEBUGGER_REMOTE_PACKET, *PDEBUGGER_REMOTE_PACKET;
 //
 
-/** @brief
-  *   The packet used for communication with the remote debugger
-  */
+/**
+ * @brief
+ *   The packet used for communication with the remote debugger
+ */
 class DebuggerRemotePacket() extends Bundle {
 
   //
@@ -50,14 +52,11 @@ class DebuggerRemotePacket() extends Bundle {
 
     val checksum = (0) / 8
 
-    val indicator =
-      (Checksum.getWidth + Alignment0.getWidth) / 8
+    val indicator = (Checksum.getWidth + Alignment0.getWidth) / 8
 
-    val typeOfThePacket =
-      (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth) / 8
+    val typeOfThePacket = (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth) / 8
 
-    val requestedActionOfThePacket =
-      (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth) / 8
+    val requestedActionOfThePacket = (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth) / 8
   }
 }
 

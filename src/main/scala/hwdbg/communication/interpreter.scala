@@ -1,17 +1,18 @@
-/** @file
-  *   interpreter.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   Remote debugger packet interpreter module
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-08
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   interpreter.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Remote debugger packet interpreter module
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-08
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg.communication
 
 import chisel3._
@@ -25,8 +26,7 @@ import hwdbg.constants._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
-    val sIdle, sInit, sReadChecksum, sReadIndicator, sReadTypeOfThePacket,
-        sReadRequestedActionOfThePacket, sDone = Value
+    val sIdle, sInit, sReadChecksum, sReadIndicator, sReadTypeOfThePacket, sReadRequestedActionOfThePacket, sDone = Value
   }
 }
 
@@ -67,9 +67,7 @@ class DebuggerPacketInterpreter(
     //
     val interpretationDone = Output(Bool()) // interpretation done or not?
     val foundValidPacket = Output(Bool()) // packet was valid or not
-    val requestedActionOfThePacket = Output(
-      UInt(new DebuggerRemotePacket().getWidth.W)
-    ) // the requested action
+    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().getWidth.W)) // the requested action
 
   })
 
@@ -93,9 +91,7 @@ class DebuggerPacketInterpreter(
   //
   // Structure (as register) of the received packet buffer
   //
-  val regReceivedPacketBuffer = RegInit(
-    0.U.asTypeOf(new DebuggerRemotePacket())
-  )
+  val regReceivedPacketBuffer = RegInit(0.U.asTypeOf(new DebuggerRemotePacket()))
 
   //
   // Apply the chip enable signal
@@ -109,18 +105,10 @@ class DebuggerPacketInterpreter(
         //
         // Create logs from communication structure offsets
         //
-        LogInfo(debug)(
-          f"The offset of Checksum is 0x${regReceivedPacketBuffer.Offset.checksum}%x"
-        )
-        LogInfo(debug)(
-          f"The offset of Indicator is 0x${regReceivedPacketBuffer.Offset.indicator}%x"
-        )
-        LogInfo(debug)(
-          f"The offset of TypeOfThePacket is 0x${regReceivedPacketBuffer.Offset.typeOfThePacket}%x"
-        )
-        LogInfo(debug)(
-          f"The offset of RequestedActionOfThePacket is 0x${regReceivedPacketBuffer.Offset.requestedActionOfThePacket}%x"
-        )
+        LogInfo(debug)(f"The offset of Checksum is 0x${regReceivedPacketBuffer.Offset.checksum}%x")
+        LogInfo(debug)(f"The offset of Indicator is 0x${regReceivedPacketBuffer.Offset.indicator}%x")
+        LogInfo(debug)(f"The offset of TypeOfThePacket is 0x${regReceivedPacketBuffer.Offset.typeOfThePacket}%x")
+        LogInfo(debug)(f"The offset of RequestedActionOfThePacket is 0x${regReceivedPacketBuffer.Offset.requestedActionOfThePacket}%x")
 
         //
         // Check whether the interrupt from the PS is received or not
@@ -200,15 +188,14 @@ class DebuggerPacketInterpreter(
         //
         // Check whether the indicator is valid or not
         //
-        when(
-          regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
-        ) {
+        when(regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
 
           //
           // Indicator of packet is valid
           // (Goes to the next section)
           //
           state := sReadRequestedActionOfThePacket
+
         }.otherwise {
 
           //
@@ -219,7 +206,6 @@ class DebuggerPacketInterpreter(
           regInterpretationDone := true.B
           state := sIdle
         }
-
       }
       is(sReadRequestedActionOfThePacket) {
 
@@ -231,9 +217,7 @@ class DebuggerPacketInterpreter(
         //
         // Check whether the type of the packet is valid or not
         //
-        when(
-          regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
-        ) {
+        when(regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
 
           //
           // Type of packet is valid
@@ -329,11 +313,6 @@ object DebuggerPacketInterpreter {
     //
     // Return the output result
     //
-    (
-      rdWrAddr,
-      interpretationDone,
-      foundValidPacket,
-      requestedActionOfThePacket
-    )
+    (rdWrAddr, interpretationDone, foundValidPacket, requestedActionOfThePacket)
   }
 }

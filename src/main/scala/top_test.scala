@@ -1,17 +1,18 @@
-/** @file
-  *   top_test.scala
-  * @author
-  *   Sina Karvandi (sina@hyperdbg.org)
-  * @brief
-  *   hwdbg's top module (with BRAM) for testing
-  * @details
-  * @version 0.1
-  * @date
-  *   2024-04-04
-  *
-  * @copyright
-  *   This project is released under the GNU Public License v3.
-  */
+/**
+ * @file
+ *   top_test.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   hwdbg's top module (with BRAM) for testing
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-04-04
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
 package hwdbg
 
 import chisel3._
