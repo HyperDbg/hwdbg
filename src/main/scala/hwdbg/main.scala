@@ -95,9 +95,54 @@ class DebuggerMain(
     )
 
   //
+  // Assign to the output (for testing)
+  //
+  when(interpretationDone === true.B && foundValidPacket === true.B) {
+
+    when(requestedActionOfThePacket === 0x12345678.U) {
+
+      io.outputPin(0) := 1.U
+      io.outputPin(1) := 0.U
+      io.outputPin(2) := 0.U
+      io.outputPin(3) := 0.U
+    }.elsewhen(requestedActionOfThePacket === 0x12345670.U) {
+
+      io.outputPin(0) := 1.U
+      io.outputPin(1) := 1.U
+      io.outputPin(2) := 0.U
+      io.outputPin(3) := 0.U
+    }.elsewhen(requestedActionOfThePacket === 0x12345600.U) {
+
+      io.outputPin(0) := 1.U
+      io.outputPin(1) := 1.U
+      io.outputPin(2) := 1.U
+      io.outputPin(3) := 0.U
+    }.elsewhen(requestedActionOfThePacket === 0x12345000.U) {
+
+      io.outputPin(0) := 1.U
+      io.outputPin(1) := 1.U
+      io.outputPin(2) := 1.U
+      io.outputPin(3) := 1.U
+    }.otherwise {
+
+      io.outputPin(0) := 0.U
+      io.outputPin(1) := 0.U
+      io.outputPin(2) := 0.U
+      io.outputPin(3) := 0.U
+    }
+  }
+    .otherwise {
+
+      io.outputPin(0) := 0.U
+      io.outputPin(1) := 0.U
+      io.outputPin(2) := 0.U
+      io.outputPin(3) := 0.U
+    }
+
+  //
   // Configure the output signals
   //
-  for (i <- 0 until numberOfOutputPins) {
+  for (i <- 4 until numberOfOutputPins) {
     io.outputPin(i) := requestedActionOfThePacket(i)
   }
 

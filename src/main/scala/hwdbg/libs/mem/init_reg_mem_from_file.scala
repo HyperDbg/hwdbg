@@ -70,12 +70,18 @@ class InitRegMemFromFile(
     VecInit(InitRegMemFromFileTools.readmemh(debug, memoryFile, width))
   )
 
+  //
+  // This because the address of the saved registers are using 4 bytes granularities
+  // E.g., 4 Rsh 2 = 1 | 8 Rsh 2 = 2 | 12 Rsh 2 = 3
+  //
+  val actualAddr = io.addr >> 2
+
   when(io.enable) {
-    val rdwrPort = mem(io.addr)
+    val rdwrPort = mem(actualAddr)
     io.dataOut := rdwrPort
 
     when(io.write) {
-      mem(io.addr) := io.dataIn
+      mem(actualAddr) := io.dataIn
     }
   }.otherwise {
     io.dataOut := 0.U

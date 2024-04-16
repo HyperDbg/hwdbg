@@ -21,6 +21,7 @@ import circt.stage.ChiselStage
 import hwdbg.configs._
 import hwdbg.types._
 import hwdbg.utils._
+import hwdbg.constants._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
@@ -83,6 +84,11 @@ class DebuggerPacketInterpreter(
   val regFoundValidPacket = RegInit(false.B)
 
   //
+  // Rising-edge detector for interpretation signal
+  //
+  val risingEdgePlInSignal = io.plInSignal & !RegNext(io.plInSignal)
+
+  //
   // Structure (as register) of the received packet buffer
   //
   val regReceivedPacketBuffer = RegInit(
@@ -117,7 +123,7 @@ class DebuggerPacketInterpreter(
         //
         // Check whether the interrupt from the PS is received or not
         //
-        when(io.plInSignal === true.B) {
+        when(risingEdgePlInSignal === true.B) {
           state := sInit
         }
 
@@ -175,6 +181,7 @@ class DebuggerPacketInterpreter(
         // Goes to the next section
         //
         state := sReadTypeOfThePacket
+
       }
       is(sReadTypeOfThePacket) {
 
@@ -189,9 +196,28 @@ class DebuggerPacketInterpreter(
         regRdWrAddr := regReceivedPacketBuffer.Offset.requestedActionOfThePacket.U
 
         //
-        // Goes to the next section
+        // Check whether the indicator is valid or not
         //
-        state := sReadRequestedActionOfThePacket
+        when(
+          regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
+        ) {
+
+          //
+          // Indicator of packet is valid
+          // (Goes to the next section)
+          //
+          state := sReadRequestedActionOfThePacket
+        }.otherwise {
+
+          //
+          // Type of packet is not valid
+          // (interpretation was done but not found a valid packet,
+          // so, go to the idle state)
+          //
+          regInterpretationDone := true.B
+          state := sIdle
+        }
+
       }
       is(sReadRequestedActionOfThePacket) {
 
@@ -201,9 +227,28 @@ class DebuggerPacketInterpreter(
         regReceivedPacketBuffer.RequestedActionOfThePacket := io.rdData
 
         //
-        // Reading all values
+        // Check whether the type of the packet is valid or not
         //
-        state := sDone
+        when(
+          regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
+        ) {
+
+          //
+          // Type of packet is valid
+          // All the values are now valid
+          // (Goes to the next section)
+          //
+          state := sDone
+        }.otherwise {
+
+          //
+          // Type of packet is not valid
+          // (interpretation was done but not found a valid packet,
+          // so, go to the idle state)
+          //
+          regInterpretationDone := true.B
+          state := sIdle
+        }
       }
       is(sDone) {
 
