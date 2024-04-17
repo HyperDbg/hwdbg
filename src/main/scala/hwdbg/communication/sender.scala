@@ -21,7 +21,6 @@ import circt.stage.ChiselStage
 
 import hwdbg.configs._
 import hwdbg.types._
-import hwdbg.utils._
 import hwdbg.constants._
 
 object DebuggerPacketSenderEnums {
@@ -69,7 +68,7 @@ class DebuggerPacketSender(
     //
     val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
     val sendingSignalDone = Output(Bool()) // sending signal done or not?
-    val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().getWidth.W)) // the requested action
+    val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val sendingDataArray = Input(Vec(lengthOfDataSendingArray, UInt((bramDataWidth.W)))) // data to be sent to the debugger
 
   })

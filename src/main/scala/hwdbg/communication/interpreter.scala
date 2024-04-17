@@ -67,7 +67,7 @@ class DebuggerPacketInterpreter(
     //
     val interpretationDone = Output(Bool()) // interpretation done or not?
     val foundValidPacket = Output(Bool()) // packet was valid or not
-    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().getWidth.W)) // the requested action
+    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
 
   })
 
@@ -82,6 +82,7 @@ class DebuggerPacketInterpreter(
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
   val regInterpretationDone = RegInit(false.B)
   val regFoundValidPacket = RegInit(false.B)
+  val regRequestedActionOfThePacket = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
 
   //
   // Rising-edge detector for interpretation signal
@@ -89,9 +90,9 @@ class DebuggerPacketInterpreter(
   val risingEdgePlInSignal = io.plInSignal & !RegNext(io.plInSignal)
 
   //
-  // Structure (as register) of the received packet buffer
+  // Structure (as wire) of the received packet buffer
   //
-  val regReceivedPacketBuffer = RegInit(0.U.asTypeOf(new DebuggerRemotePacket()))
+  val receivedPacketBuffer = WireInit(0.U.asTypeOf(new DebuggerRemotePacket())) // here the wire is not used
 
   //
   // Apply the chip enable signal
@@ -105,10 +106,10 @@ class DebuggerPacketInterpreter(
         //
         // Create logs from communication structure offsets
         //
-        LogInfo(debug)(f"The offset of Checksum is 0x${regReceivedPacketBuffer.Offset.checksum}%x")
-        LogInfo(debug)(f"The offset of Indicator is 0x${regReceivedPacketBuffer.Offset.indicator}%x")
-        LogInfo(debug)(f"The offset of TypeOfThePacket is 0x${regReceivedPacketBuffer.Offset.typeOfThePacket}%x")
-        LogInfo(debug)(f"The offset of RequestedActionOfThePacket is 0x${regReceivedPacketBuffer.Offset.requestedActionOfThePacket}%x")
+        LogInfo(debug)(f"The offset of Checksum is 0x${receivedPacketBuffer.Offset.checksum}%x")
+        LogInfo(debug)(f"The offset of Indicator is 0x${receivedPacketBuffer.Offset.indicator}%x")
+        LogInfo(debug)(f"The offset of TypeOfThePacket is 0x${receivedPacketBuffer.Offset.typeOfThePacket}%x")
+        LogInfo(debug)(f"The offset of RequestedActionOfThePacket is 0x${receivedPacketBuffer.Offset.requestedActionOfThePacket}%x")
 
         //
         // Check whether the interrupt from the PS is received or not
@@ -123,15 +124,15 @@ class DebuggerPacketInterpreter(
         regRdWrAddr := 0.U
         regInterpretationDone := false.B
         regFoundValidPacket := false.B
-        regReceivedPacketBuffer.RequestedActionOfThePacket := 0.U
+        regRequestedActionOfThePacket := 0.U
 
       }
       is(sInit) {
 
         //
-        // Adjust address to read Checksum from BRAM
+        // Adjust address to read Checksum from BRAM (Not Used)
         //
-        regRdWrAddr := regReceivedPacketBuffer.Offset.checksum.U
+        regRdWrAddr := receivedPacketBuffer.Offset.checksum.U
 
         //
         // Goes to the next section
@@ -141,14 +142,9 @@ class DebuggerPacketInterpreter(
       is(sReadChecksum) {
 
         //
-        // Read the Checksum
-        //
-        regReceivedPacketBuffer.Checksum := io.rdData
-
-        //
         // Adjust address to read Indicator from BRAM
         //
-        regRdWrAddr := regReceivedPacketBuffer.Offset.indicator.U
+        regRdWrAddr := receivedPacketBuffer.Offset.indicator.U
 
         //
         // Goes to the next section
@@ -158,40 +154,47 @@ class DebuggerPacketInterpreter(
       is(sReadIndicator) {
 
         //
-        // Read the Indicator
-        //
-        regReceivedPacketBuffer.Indicator := io.rdData
-
-        //
         // Adjust address to read TypeOfThePacket from BRAM
         //
-        regRdWrAddr := regReceivedPacketBuffer.Offset.typeOfThePacket.U
-
-        //
-        // Goes to the next section
-        //
-        state := sReadTypeOfThePacket
-
-      }
-      is(sReadTypeOfThePacket) {
-
-        //
-        // Read the TypeOfThePacket
-        //
-        regReceivedPacketBuffer.TypeOfThePacket := io.rdData
-
-        //
-        // Adjust address to read RequestedActionOfThePacket from BRAM
-        //
-        regRdWrAddr := regReceivedPacketBuffer.Offset.requestedActionOfThePacket.U
+        regRdWrAddr := receivedPacketBuffer.Offset.typeOfThePacket.U
 
         //
         // Check whether the indicator is valid or not
         //
-        when(regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
+        when(io.rdData === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
 
           //
           // Indicator of packet is valid
+          // (Goes to the next section)
+          //
+          state := sReadTypeOfThePacket
+
+        }.otherwise {
+
+          //
+          // Type of packet is not valid
+          // (interpretation was done but not found a valid packet,
+          // so, go to the idle state)
+          //
+          regInterpretationDone := true.B
+          state := sIdle
+        }
+      }
+      is(sReadTypeOfThePacket) {
+
+        //
+        // Adjust address to read RequestedActionOfThePacket from BRAM
+        //
+        regRdWrAddr := receivedPacketBuffer.Offset.requestedActionOfThePacket.U
+
+        //
+        // Check whether the type of the packet is valid or not
+        //
+        when(io.rdData === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
+
+          //
+          // Type of packet is valid
+          // All the values are now valid
           // (Goes to the next section)
           //
           state := sReadRequestedActionOfThePacket
@@ -206,35 +209,15 @@ class DebuggerPacketInterpreter(
           regInterpretationDone := true.B
           state := sIdle
         }
+
       }
       is(sReadRequestedActionOfThePacket) {
 
         //
         // Read the RequestedActionOfThePacket
         //
-        regReceivedPacketBuffer.RequestedActionOfThePacket := io.rdData
+        regRequestedActionOfThePacket := io.rdData
 
-        //
-        // Check whether the type of the packet is valid or not
-        //
-        when(regReceivedPacketBuffer.Indicator === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
-
-          //
-          // Type of packet is valid
-          // All the values are now valid
-          // (Goes to the next section)
-          //
-          state := sDone
-        }.otherwise {
-
-          //
-          // Type of packet is not valid
-          // (interpretation was done but not found a valid packet,
-          // so, go to the idle state)
-          //
-          regInterpretationDone := true.B
-          state := sIdle
-        }
       }
       is(sDone) {
 
@@ -260,7 +243,7 @@ class DebuggerPacketInterpreter(
   io.rdWrAddr := regRdWrAddr
   io.interpretationDone := regInterpretationDone
   io.foundValidPacket := regFoundValidPacket
-  io.requestedActionOfThePacket := regReceivedPacketBuffer.RequestedActionOfThePacket
+  io.requestedActionOfThePacket := regRequestedActionOfThePacket
 
 }
 
@@ -288,7 +271,7 @@ object DebuggerPacketInterpreter {
     val interpretationDone = Wire(Bool())
     val foundValidPacket = Wire(Bool())
     val requestedActionOfThePacket = Wire(
-      UInt(new DebuggerRemotePacket().getWidth.W)
+      UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)
     )
 
     //
