@@ -25,15 +25,14 @@ import hwdbg.constants._
 
 object DebuggerPacketSenderEnums {
   object State extends ChiselEnum {
-    val sIdle, sWriteChecksum, sWriteIndicator, sWriteTypeOfThePacket, sWriteRequestedActionOfThePacket, sWriteSendingDataArray, sDone = Value
+    val sIdle, sWriteChecksum, sWriteIndicator, sWriteTypeOfThePacket, sWriteRequestedActionOfThePacket, sWaitToGetData, sSendData, sDone = Value
   }
 }
 
 class DebuggerPacketSender(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    lengthOfDataSendingArray: Int = DebuggerConfigurations.LENGTH_OF_DATA_SENDING_ARRAY
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
 ) extends Module {
 
   //
@@ -67,9 +66,17 @@ class DebuggerPacketSender(
     // Sending signals
     //
     val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
-    val sendingSignalDone = Output(Bool()) // sending signal done or not?
+    val noNewData = Input(Bool()) // should sender finish sending buffers or not?
+    val dataValid = Input(Bool()) // should sender send next buffer or not?
+
+    val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
+    val finishedSendingBuffer = Output(Bool()) // indicate that the sender finished sending buffers and ready to send next packet
+
+    //
+    // Actual Data to be sent
+    //
     val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
-    val sendingDataArray = Input(Vec(lengthOfDataSendingArray, UInt((bramDataWidth.W)))) // data to be sent to the debugger
+    val sendingData = Input(UInt(bramDataWidth.W)) // data to be sent to the debugger
 
   })
 
@@ -85,12 +92,20 @@ class DebuggerPacketSender(
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
   val regWrEna = RegInit(false.B)
   val regWrData = RegInit(0.U(bramDataWidth.W))
-  val regSendingSignalDone = RegInit(false.B)
+  val regSendWaitForBuffer = RegInit(false.B)
+  val regFinishedSendingBuffer = RegInit(false.B)
 
   //
   // Rising-edge detector for start sending signal
   //
   val risingEdgeBeginSendingBuffer = io.beginSendingBuffer & !RegNext(io.beginSendingBuffer)
+
+  //
+  // Keeping the state of whether sending data has been started or not
+  // Means that if the sender is in the middle of sending the headers
+  // of the packet or the actual data
+  //
+  val regIsSendingDataStarted = RegInit(false.B)
 
   //
   // Structure (as wire) of the received packet buffer
@@ -120,7 +135,13 @@ class DebuggerPacketSender(
         regRdWrAddr := 0.U
         regWrEna := false.B
         regWrData := 0.U
-        regSendingSignalDone := false.B
+        regSendWaitForBuffer := false.B
+        regFinishedSendingBuffer := false.B
+
+        //
+        // Sending data has not been started
+        //
+        regIsSendingDataStarted := false.B
 
       }
       is(sWriteChecksum) {
@@ -197,7 +218,90 @@ class DebuggerPacketSender(
         //
         // Goes to the next section
         //
-        state := sDone // sWriteSendingDataArray
+        state := sWaitToGetData
+
+      }
+      is(sWaitToGetData) {
+
+        //
+        // Disable writing to the BRAM
+        //
+        regWrEna := false.B
+
+        //
+        // Indicate that the module is waiting for data
+        //
+        regSendWaitForBuffer := true.B
+
+        //
+        // Check whether sending actual data already started or not
+        //
+        when(regIsSendingDataStarted === false.B) {
+
+          //
+          // It's not yet started, so we adjust the address to the start
+          // of the buffer after the last field of the header
+          //
+          regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.startOfDataBuffer).U
+
+          //
+          // Indicate that sending data already started
+          //
+          regIsSendingDataStarted := true.B
+        }
+
+        //
+        // Wait to receive the data
+        //
+        when(io.dataValid === true.B) {
+
+          //
+          // The data is valid, so let's send it
+          //
+          state := sSendData
+
+        }.elsewhen(io.noNewData === true.B && io.dataValid === true.B) {
+
+          //
+          // Sending data was done
+          //
+          state := sDone
+
+        }.otherwise {
+
+          //
+          // Stay in the same state as the data is not ready (valid)
+          //
+          state := sWaitToGetData
+        }
+
+      }
+      is(sSendData) {
+
+        //
+        // Not waiting for the buffer at this state
+        //
+        regSendWaitForBuffer := false.B
+
+        //
+        // Enable writing to the BRAM
+        //
+        regWrEna := true.B
+
+        //
+        // Adjust address to write next data to BRAM
+        //
+        regRdWrAddr := regRdWrAddr + bramDataWidth.U
+
+        //
+        // Adjust data to write as the sending data
+        //
+        regWrData := io.sendingData
+
+        //
+        // Again go to the state for waiting for new data
+        //
+        state := sWaitToGetData
 
       }
       is(sDone) {
@@ -205,7 +309,7 @@ class DebuggerPacketSender(
         //
         // Adjust the output bits
         //
-        regSendingSignalDone := true.B
+        regFinishedSendingBuffer := true.B
 
         //
         // Interrupt the PS
@@ -229,7 +333,9 @@ class DebuggerPacketSender(
   io.rdWrAddr := regRdWrAddr
   io.wrEna := regWrEna
   io.wrData := regWrData
-  io.sendingSignalDone := regSendingSignalDone
+  io.sendWaitForBuffer := regSendWaitForBuffer
+  io.finishedSendingBuffer := regFinishedSendingBuffer
+
 }
 
 object DebuggerPacketSender {
@@ -237,21 +343,21 @@ object DebuggerPacketSender {
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      lengthOfDataSendingArray: Int = DebuggerConfigurations.LENGTH_OF_DATA_SENDING_ARRAY
+      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
   )(
       en: Bool,
       beginSendingBuffer: Bool,
+      noNewData: Bool,
+      dataValid: Bool,
       requestedActionOfThePacket: UInt,
-      sendingDataArray: Vec[UInt]
-  ): (Bool, UInt, Bool, UInt, Bool) = {
+      sendingData: UInt
+  ): (Bool, UInt, Bool, UInt, Bool, Bool) = {
 
     val debuggerPacketSender = Module(
       new DebuggerPacketSender(
         debug,
         bramAddrWidth,
-        bramDataWidth,
-        lengthOfDataSendingArray
+        bramDataWidth
       )
     )
 
@@ -259,15 +365,18 @@ object DebuggerPacketSender {
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
     val wrEna = Wire(Bool())
     val wrData = Wire(UInt(bramDataWidth.W))
-    val sendingSignalDone = Wire(Bool())
+    val sendWaitForBuffer = Wire(Bool())
+    val finishedSendingBuffer = Wire(Bool())
 
     //
     // Configure the input signals
     //
     debuggerPacketSender.io.en := en
     debuggerPacketSender.io.beginSendingBuffer := beginSendingBuffer
+    debuggerPacketSender.io.noNewData := noNewData
+    debuggerPacketSender.io.dataValid := dataValid
     debuggerPacketSender.io.requestedActionOfThePacket := requestedActionOfThePacket
-    debuggerPacketSender.io.sendingDataArray := sendingDataArray
+    debuggerPacketSender.io.sendingData := sendingData
 
     //
     // Configure the output signals
@@ -280,11 +389,12 @@ object DebuggerPacketSender {
     //
     // Configure the output signals related to sending packets
     //
-    sendingSignalDone := debuggerPacketSender.io.sendingSignalDone
+    sendWaitForBuffer := debuggerPacketSender.io.sendWaitForBuffer
+    finishedSendingBuffer := debuggerPacketSender.io.finishedSendingBuffer
 
     //
     // Return the output result
     //
-    (psOutInterrupt, rdWrAddr, wrEna, wrData, sendingSignalDone)
+    (psOutInterrupt, rdWrAddr, wrEna, wrData, sendWaitForBuffer, finishedSendingBuffer)
   }
 }

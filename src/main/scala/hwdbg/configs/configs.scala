@@ -76,12 +76,6 @@ object DebuggerConfigurations {
   // Data width of the Block RAM (BRAM)
   //
   val BLOCK_RAM_DATA_WIDTH: Int = 32
-
-  //
-  // Maximum number of data to send to the debuggee
-  //
-  val LENGTH_OF_DATA_SENDING_ARRAY: Int = 4
-
 }
 
 /**

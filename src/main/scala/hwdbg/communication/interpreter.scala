@@ -219,6 +219,11 @@ class DebuggerPacketInterpreter(
         //
         regRequestedActionOfThePacket := io.rdData
 
+        //
+        // Goes to the next section
+        //
+        state := sDone
+
       }
       is(sDone) {
 

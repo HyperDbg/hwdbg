@@ -57,6 +57,9 @@ class DebuggerRemotePacket() extends Bundle {
     val typeOfThePacket = (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth) / 8
 
     val requestedActionOfThePacket = (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth) / 8
+
+    val startOfDataBuffer =
+      (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth + RequestedActionOfThePacket.getWidth) / 8
   }
 }
 
