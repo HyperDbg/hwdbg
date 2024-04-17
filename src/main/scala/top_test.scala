@@ -72,7 +72,7 @@ class DebuggerModuleTestingBRAM(
       TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       bramAddrWidth,
       bramDataWidth,
-      GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+      MemoryCommunicationConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
     )(
       bramEn,
       bramWrite,

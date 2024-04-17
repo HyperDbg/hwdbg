@@ -132,7 +132,7 @@ class DebuggerPacketInterpreter(
         //
         // Adjust address to read Checksum from BRAM (Not Used)
         //
-        regRdWrAddr := receivedPacketBuffer.Offset.checksum.U
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.checksum).U
 
         //
         // Goes to the next section
@@ -144,7 +144,7 @@ class DebuggerPacketInterpreter(
         //
         // Adjust address to read Indicator from BRAM
         //
-        regRdWrAddr := receivedPacketBuffer.Offset.indicator.U
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.indicator).U
 
         //
         // Goes to the next section
@@ -156,7 +156,7 @@ class DebuggerPacketInterpreter(
         //
         // Adjust address to read TypeOfThePacket from BRAM
         //
-        regRdWrAddr := receivedPacketBuffer.Offset.typeOfThePacket.U
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.typeOfThePacket).U
 
         //
         // Check whether the indicator is valid or not
@@ -185,12 +185,13 @@ class DebuggerPacketInterpreter(
         //
         // Adjust address to read RequestedActionOfThePacket from BRAM
         //
-        regRdWrAddr := receivedPacketBuffer.Offset.requestedActionOfThePacket.U
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.requestedActionOfThePacket).U
 
         //
         // Check whether the type of the packet is valid or not
         //
-        when(io.rdData === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
+        val packetType: DebuggerRemotePacketType.Value = DebuggerRemotePacketType.DEBUGGER_TO_DEBUGGEE_HARDWARE_LEVEL
+        when(io.rdData === packetType.id.U) {
 
           //
           // Type of packet is valid

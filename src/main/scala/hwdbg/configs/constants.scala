@@ -35,11 +35,11 @@ object HyperDbgSharedConstants {
 
 /**
  * @brief
- *   Enumeration for different packet types in HyperDbg packets
+ *   Enumeration for different packet types in HyperDbg packets (DEBUGGER_REMOTE_PACKET_TYPE)
  * @warning
  *   Used in HyperDbg
  */
-object DEBUGGER_REMOTE_PACKET_TYPE extends Enumeration {
+object DebuggerRemotePacketType extends Enumeration {
 
   //
   // Debugger to debuggee (vmx-root)

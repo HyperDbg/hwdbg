@@ -55,7 +55,7 @@ class InitRegMemFromFile(
     memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
     addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    size: Int = GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+    size: Int = MemoryCommunicationConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
 ) extends Module {
 
   val io = IO(new Bundle {
@@ -93,7 +93,7 @@ object InitRegMemFromFile {
       memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      size: Int = GeneralConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
+      size: Int = MemoryCommunicationConfigurations.DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE
   )(
       enable: Bool,
       write: Bool,

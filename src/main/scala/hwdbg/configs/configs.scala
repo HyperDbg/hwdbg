@@ -86,12 +86,22 @@ object DebuggerConfigurations {
 
 /**
  * @brief
- *   The constants for configuration
+ *   The constants for memory communication
  */
-object GeneralConfigurations {
+object MemoryCommunicationConfigurations {
 
   //
   // Default number of bytes used in initialized SRAM memory
   //
   val DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE: Int = 8192 // 8 KB
+
+  //
+  // Base address of PS to PL SRAM communication memory
+  //
+  val BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION: Int = 0
+
+  //
+  // Base address of PL to PS SRAM communication memory
+  //
+  val BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION: Int = DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE / 2
 }

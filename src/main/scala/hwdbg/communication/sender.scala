@@ -25,7 +25,7 @@ import hwdbg.constants._
 
 object DebuggerPacketSenderEnums {
   object State extends ChiselEnum {
-    val sIdle, sInit, sDone = Value
+    val sIdle, sWriteChecksum, sWriteIndicator, sWriteTypeOfThePacket, sWriteRequestedActionOfThePacket, sWriteSendingDataArray, sDone = Value
   }
 }
 
@@ -110,7 +110,7 @@ class DebuggerPacketSender(
         // Check whether the interrupt from the PS is received or not
         //
         when(risingEdgeBeginSendingBuffer === true.B) {
-          state := sInit
+          state := sWriteChecksum
         }
 
         //
@@ -123,13 +123,94 @@ class DebuggerPacketSender(
         regSendingSignalDone := false.B
 
       }
-      is(sInit) {}
+      is(sWriteChecksum) {
+
+        //
+        // Enable writing to the BRAM
+        //
+        regWrEna := true.B
+
+        //
+        // Adjust address to write Checksum to BRAM (Not Used)
+        //
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.checksum).U
+
+        //
+        // Adjust data to write Checksum
+        //
+        regWrData := 0.U // Checksum is ignored
+
+        //
+        // Goes to the next section
+        //
+        state := sWriteIndicator
+      }
+      is(sWriteIndicator) {
+
+        //
+        // Adjust address to write Indicator to BRAM
+        //
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
+
+        //
+        // Adjust data to write Indicator
+        //
+        regWrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
+
+        //
+        // Goes to the next section
+        //
+        state := sWriteTypeOfThePacket
+
+      }
+      is(sWriteTypeOfThePacket) {
+
+        //
+        // Adjust address to write type of packet to BRAM
+        //
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.typeOfThePacket).U
+
+        //
+        // Adjust data to write type of packet
+        //
+        val packetType: DebuggerRemotePacketType.Value = DebuggerRemotePacketType.DEBUGGEE_TO_DEBUGGER_HARDWARE_LEVEL
+        regWrData := packetType.id.U
+
+        //
+        // Goes to the next section
+        //
+        state := sWriteRequestedActionOfThePacket
+
+      }
+      is(sWriteRequestedActionOfThePacket) {
+
+        //
+        // Adjust address to write requested action of packet to BRAM
+        //
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.requestedActionOfThePacket).U
+
+        //
+        // Adjust data to write requested action of packet
+        //
+        regWrData := io.requestedActionOfThePacket
+
+        //
+        // Goes to the next section
+        //
+        state := sDone // sWriteSendingDataArray
+
+      }
       is(sDone) {
 
         //
         // Adjust the output bits
         //
         regSendingSignalDone := true.B
+
+        //
+        // Interrupt the PS
+        //
+        regPsOutInterrupt := true.B
 
         //
         // Go to the idle state
