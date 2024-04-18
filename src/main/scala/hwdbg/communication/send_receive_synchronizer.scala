@@ -49,13 +49,13 @@ class SendReceiveSynchronizer(
     val wrData = Output(UInt(bramDataWidth.W)) // write data
 
     //
-    // Interpreter ports
+    // Receiver ports
     //
     val requestedActionOfThePacketOutput = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val requestedActionOfThePacketOutputValid = Output(Bool()) // whether data on the requested action is valid or not
     val dataValidOutput = Output(Bool()) // whether data on the receiving data line is valid or not?
     val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
-    val finishedInterpretingBuffer = Output(Bool()) // interpretation done or not?
+    val finishedReceivingBuffer = Output(Bool()) // receiving is done or not?
 
     //
     // Sender ports

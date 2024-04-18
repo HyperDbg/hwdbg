@@ -62,12 +62,12 @@ async def DebuggerModuleTestingBRAM_test(dut):
         await RisingEdge(dut.clock)
     dut.reset.value = 0
 
-    dut._log.info("Enabling an interrupting chip to interpret commands from BRAM")
+    dut._log.info("Enabling an interrupting chip to receive commands from BRAM")
 
     # Enable chip
     dut.io_en.value = 1
 
-    # Tell the hwdbg to interpret BRAM results
+    # Tell the hwdbg to receive BRAM results
     dut.io_plInSignal.value = 1
 
     # Set initial input value to prevent it from floating

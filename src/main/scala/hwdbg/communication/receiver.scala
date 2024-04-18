@@ -1,10 +1,10 @@
 /**
  * @file
- *   interpreter.scala
+ *   receiver.scala
  * @author
  *   Sina Karvandi (sina@hyperdbg.org)
  * @brief
- *   Remote debugger packet interpreter module
+ *   Remote debugger packet receiver module
  * @details
  * @version 0.1
  * @date
@@ -24,14 +24,14 @@ import hwdbg.types._
 import hwdbg.utils._
 import hwdbg.constants._
 
-object DebuggerPacketInterpreterEnums {
+object DebuggerPacketReceiverEnums {
   object State extends ChiselEnum {
     val sIdle, sReadChecksum, sReadIndicator, sReadTypeOfThePacket, sReadRequestedActionOfThePacket, sRequestedActionIsValid, sReadActionBuffer,
         sDone = Value
   }
 }
 
-class DebuggerPacketInterpreter(
+class DebuggerPacketReceiver(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
@@ -40,8 +40,8 @@ class DebuggerPacketInterpreter(
   //
   // Import state enum
   //
-  import DebuggerPacketInterpreterEnums.State
-  import DebuggerPacketInterpreterEnums.State._
+  import DebuggerPacketReceiverEnums.State
+  import DebuggerPacketReceiverEnums.State._
 
   val io = IO(new Bundle {
 
@@ -64,18 +64,18 @@ class DebuggerPacketInterpreter(
     val rdData = Input(UInt(bramDataWidth.W)) // read data
 
     //
-    // Interpretation signals
+    // Receiving signals
     //
     val requestedActionOfThePacketOutput = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val requestedActionOfThePacketOutputValid = Output(Bool()) // whether data on the requested action is valid or not
-    val noNewData = Input(Bool()) // interpretation done or not?
+    val noNewData = Input(Bool()) // receive done or not?
 
     // (this contains and edge-detection mechanism, which means reader should make it low after reading the data)
     val readNextData = Input(Bool()) // whether the next data should be read or not?
     val dataValidOutput = Output(Bool()) // whether data on the receiving data line is valid or not?
     val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
 
-    val finishedInterpretingBuffer = Output(Bool()) // interpretation done or not?
+    val finishedReceivingBuffer = Output(Bool()) // Receiving is done or not?
 
   })
 
@@ -92,10 +92,10 @@ class DebuggerPacketInterpreter(
   val regRequestedActionOfThePacketOutputValid = RegInit(false.B)
   val regDataValidOutput = RegInit(false.B)
   val regReceivingData = RegInit(0.U(bramDataWidth.W))
-  val regFinishedInterpretingBuffer = RegInit(false.B)
+  val regFinishedReceivingBuffer = RegInit(false.B)
 
   //
-  // Rising-edge detector for interpretation signal
+  // Rising-edge detector for start receiving signal
   //
   val risingEdgePlInSignal = io.plInSignal & !RegNext(io.plInSignal)
 
@@ -141,7 +141,7 @@ class DebuggerPacketInterpreter(
         regRequestedActionOfThePacketOutputValid := false.B
         regDataValidOutput := false.B
         regReceivingData := 0.U
-        regFinishedInterpretingBuffer := false.B
+        regFinishedIReceivingBuffer := false.B
 
       }
       is(sReadChecksum) {
@@ -190,7 +190,7 @@ class DebuggerPacketInterpreter(
 
           //
           // Type of packet is not valid
-          // (interpretation was done but not found a valid packet,
+          // (Receiving was done but not found a valid packet,
           // so, go to the idle state)
           //
           state := sDone
@@ -219,7 +219,7 @@ class DebuggerPacketInterpreter(
 
           //
           // Type of packet is not valid
-          // (interpretation was done but not found a valid packet,
+          // (Receiving was done but not found a valid packet,
           // so, go to the idle state)
           //
           state := sDone
@@ -240,7 +240,7 @@ class DebuggerPacketInterpreter(
 
         //
         // Check if the caller needs to read the next part of
-        // the block RAM or the interpretation should be finished
+        // the block RAM or the receiving data should be finished
         //
         when(risingEdgeReadNextData === true.B) {
 
@@ -257,7 +257,7 @@ class DebuggerPacketInterpreter(
         }.elsewhen(io.noNewData === true.B && io.readNextData === false.B) {
 
           //
-          // No new data, the interpretation is done
+          // No new data, the receiving is done
           //
           state := sDone
 
@@ -291,12 +291,12 @@ class DebuggerPacketInterpreter(
       is(sDone) {
 
         //
-        // The interpretation is done at this stage, either
+        // The receiving is done at this stage, either
         // was successful of unsucessful, we'll release the
-        // sharing bram resource by indicating that the intpreter
+        // sharing bram resource by indicating that the receiving
         // module is no longer using the bram line
         //
-        regFinishedInterpretingBuffer := true.B
+        regFinishedReceivingBuffer := true.B
 
         //
         // Go to the idle state
@@ -316,11 +316,11 @@ class DebuggerPacketInterpreter(
   io.requestedActionOfThePacketOutputValid := regRequestedActionOfThePacketOutputValid
   io.dataValidOutput := regDataValidOutput
   io.receivingData := regReceivingData
-  io.finishedInterpretingBuffer := regFinishedInterpretingBuffer
+  io.finishedReceivingBuffer := regFinishedReceivingBuffer
 
 }
 
-object DebuggerPacketInterpreter {
+object DebuggerPacketReceiver {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
@@ -334,8 +334,8 @@ object DebuggerPacketInterpreter {
       readNextData: Bool
   ): (UInt, UInt, Bool, Bool, UInt, Bool) = {
 
-    val debuggerPacketInterpreter = Module(
-      new DebuggerPacketInterpreter(
+    val debuggerPacketReceiver = Module(
+      new DebuggerPacketReceiver(
         debug,
         bramAddrWidth,
         bramDataWidth
@@ -347,34 +347,34 @@ object DebuggerPacketInterpreter {
     val requestedActionOfThePacketOutputValid = Wire(Bool())
     val dataValidOutput = Wire(Bool())
     val receivingData = Wire(UInt(bramDataWidth.W))
-    val finishedInterpretingBuffer = Wire(Bool())
+    val finishedReceivingBuffer = Wire(Bool())
 
     //
     // Configure the input signals
     //
-    debuggerPacketInterpreter.io.en := en
-    debuggerPacketInterpreter.io.plInSignal := plInSignal
-    debuggerPacketInterpreter.io.rdData := rdData
-    debuggerPacketInterpreter.io.noNewData := noNewData
-    debuggerPacketInterpreter.io.readNextData := readNextData
+    debuggerPacketReceiver.io.en := en
+    debuggerPacketReceiver.io.plInSignal := plInSignal
+    debuggerPacketReceiver.io.rdData := rdData
+    debuggerPacketReceiver.io.noNewData := noNewData
+    debuggerPacketReceiver.io.readNextData := readNextData
 
     //
     // Configure the output signals
     //
-    rdWrAddr := debuggerPacketInterpreter.io.rdWrAddr
+    rdWrAddr := debuggerPacketReceiver.io.rdWrAddr
 
     //
-    // Configure the output signals related to interpreted packets
+    // Configure the output signals related to received packets
     //
-    requestedActionOfThePacketOutput := debuggerPacketInterpreter.io.requestedActionOfThePacketOutput
-    requestedActionOfThePacketOutputValid := debuggerPacketInterpreter.io.requestedActionOfThePacketOutputValid
-    dataValidOutput := debuggerPacketInterpreter.io.dataValidOutput
-    receivingData := debuggerPacketInterpreter.io.receivingData
-    finishedInterpretingBuffer := debuggerPacketInterpreter.io.finishedInterpretingBuffer
+    requestedActionOfThePacketOutput := debuggerPacketReceiver.io.requestedActionOfThePacketOutput
+    requestedActionOfThePacketOutputValid := debuggerPacketReceiver.io.requestedActionOfThePacketOutputValid
+    dataValidOutput := debuggerPacketReceiver.io.dataValidOutput
+    receivingData := debuggerPacketReceiver.io.receivingData
+    finishedReceivingBuffer := debuggerPacketReceiver.io.finishedReceivingBuffer
 
     //
     // Return the output result
     //
-    (rdWrAddr, requestedActionOfThePacketOutput, requestedActionOfThePacketOutputValid, dataValidOutput, receivingData, finishedInterpretingBuffer)
+    (rdWrAddr, requestedActionOfThePacketOutput, requestedActionOfThePacketOutputValid, dataValidOutput, receivingData, finishedReceivingBuffer)
   }
 }
