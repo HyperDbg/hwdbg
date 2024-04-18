@@ -66,7 +66,7 @@ class DebuggerPacketSender(
     // Sending signals
     //
     val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
-    val noNewData = Input(Bool()) // should sender finish sending buffers or not?
+    val noNewDataSender = Input(Bool()) // should sender finish sending buffers or not?
     val dataValidInput = Input(Bool()) // should sender send next buffer or not?
 
     val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
@@ -257,7 +257,7 @@ class DebuggerPacketSender(
           //
           state := sSendData
 
-        }.elsewhen(io.noNewData === true.B && io.dataValidInput === true.B) {
+        }.elsewhen(io.noNewDataSender === true.B && io.dataValidInput === true.B) {
 
           //
           // Sending data was done
@@ -344,7 +344,7 @@ object DebuggerPacketSender {
   )(
       en: Bool,
       beginSendingBuffer: Bool,
-      noNewData: Bool,
+      noNewDataSender: Bool,
       dataValidInput: Bool,
       requestedActionOfThePacketInput: UInt,
       sendingData: UInt
@@ -370,7 +370,7 @@ object DebuggerPacketSender {
     //
     debuggerPacketSender.io.en := en
     debuggerPacketSender.io.beginSendingBuffer := beginSendingBuffer
-    debuggerPacketSender.io.noNewData := noNewData
+    debuggerPacketSender.io.noNewDataSender := noNewDataSender
     debuggerPacketSender.io.dataValidInput := dataValidInput
     debuggerPacketSender.io.requestedActionOfThePacketInput := requestedActionOfThePacketInput
     debuggerPacketSender.io.sendingData := sendingData

@@ -68,10 +68,11 @@ class DebuggerPacketReceiver(
     //
     val requestedActionOfThePacketOutput = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val requestedActionOfThePacketOutputValid = Output(Bool()) // whether data on the requested action is valid or not
-    val noNewData = Input(Bool()) // receive done or not?
+    val noNewDataReceiver = Input(Bool()) // receive done or not?
 
-    // (this contains and edge-detection mechanism, which means reader should make it low after reading the data)
+    // this contains and edge-detection mechanism, which means reader should make it low after reading the data
     val readNextData = Input(Bool()) // whether the next data should be read or not?
+
     val dataValidOutput = Output(Bool()) // whether data on the receiving data line is valid or not?
     val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
 
@@ -141,7 +142,7 @@ class DebuggerPacketReceiver(
         regRequestedActionOfThePacketOutputValid := false.B
         regDataValidOutput := false.B
         regReceivingData := 0.U
-        regFinishedIReceivingBuffer := false.B
+        regFinishedReceivingBuffer := false.B
 
       }
       is(sReadChecksum) {
@@ -254,7 +255,7 @@ class DebuggerPacketReceiver(
           //
           state := sReadActionBuffer
 
-        }.elsewhen(io.noNewData === true.B && io.readNextData === false.B) {
+        }.elsewhen(io.noNewDataReceiver === true.B && io.readNextData === false.B) {
 
           //
           // No new data, the receiving is done
@@ -330,7 +331,7 @@ object DebuggerPacketReceiver {
       en: Bool,
       plInSignal: Bool,
       rdData: UInt,
-      noNewData: Bool,
+      noNewDataReceiver: Bool,
       readNextData: Bool
   ): (UInt, UInt, Bool, Bool, UInt, Bool) = {
 
@@ -355,7 +356,7 @@ object DebuggerPacketReceiver {
     debuggerPacketReceiver.io.en := en
     debuggerPacketReceiver.io.plInSignal := plInSignal
     debuggerPacketReceiver.io.rdData := rdData
-    debuggerPacketReceiver.io.noNewData := noNewData
+    debuggerPacketReceiver.io.noNewDataReceiver := noNewDataReceiver
     debuggerPacketReceiver.io.readNextData := readNextData
 
     //
