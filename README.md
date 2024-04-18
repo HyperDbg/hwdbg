@@ -12,7 +12,7 @@
 
 ## Description
 
-**hwdbg** is a chip-level debugger designed for black-box chip fuzzing and reverse engineering. The primary goal of **hwdbg** is to provide control over hardware, enabling monitoring and modification of signals down to the granular level of a single clock cycle. It is written in Chisel and Verilog.
+**hwdbg** is a chip-level debugger designed for black-box chip fuzzing, testing, and reverse engineering. The primary goal of **hwdbg** is to provide control over hardware, enabling monitoring and modification of signals down to the granular level of a single clock cycle. It is written in Chisel and Verilog.
 
 - ⚠️ This project is a work in progress and is not yet ready for testing.
 
