@@ -66,13 +66,13 @@ class DebuggerPacketInterpreter(
     //
     // Interpretation signals
     //
-    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
-    val requestedActionOfThePacketValid = Output(Bool()) // interpretation done or not?
+    val requestedActionOfThePacketOutput = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val requestedActionOfThePacketOutputValid = Output(Bool()) // whether data on the requested action is valid or not
     val noNewData = Input(Bool()) // interpretation done or not?
 
     // (this contains and edge-detection mechanism, which means reader should make it low after reading the data)
     val readNextData = Input(Bool()) // whether the next data should be read or not?
-    val dataValid = Output(Bool()) // interpretation done or not?
+    val dataValidOutput = Output(Bool()) // whether data on the receiving data line is valid or not?
     val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
 
     val finishedInterpretingBuffer = Output(Bool()) // interpretation done or not?
@@ -88,9 +88,9 @@ class DebuggerPacketInterpreter(
   // Output pins (registers)
   //
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
-  val regRequestedActionOfThePacket = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
-  val regRequestedActionOfThePacketValid = RegInit(false.B)
-  val regDataValid = RegInit(false.B)
+  val regRequestedActionOfThePacketOutput = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+  val regRequestedActionOfThePacketOutputValid = RegInit(false.B)
+  val regDataValidOutput = RegInit(false.B)
   val regReceivingData = RegInit(0.U(bramDataWidth.W))
   val regFinishedInterpretingBuffer = RegInit(false.B)
 
@@ -124,7 +124,7 @@ class DebuggerPacketInterpreter(
         LogInfo(debug)(f"The offset of Checksum is 0x${receivedPacketBuffer.Offset.checksum}%x")
         LogInfo(debug)(f"The offset of Indicator is 0x${receivedPacketBuffer.Offset.indicator}%x")
         LogInfo(debug)(f"The offset of TypeOfThePacket is 0x${receivedPacketBuffer.Offset.typeOfThePacket}%x")
-        LogInfo(debug)(f"The offset of RequestedActionOfThePacket is 0x${receivedPacketBuffer.Offset.requestedActionOfThePacket}%x")
+        LogInfo(debug)(f"The offset of requestedActionOfThePacketOutput is 0x${receivedPacketBuffer.Offset.requestedActionOfThePacket}%x")
 
         //
         // Check whether the interrupt from the PS is received or not
@@ -137,9 +137,9 @@ class DebuggerPacketInterpreter(
         // Configure the registers in case of sIdle
         //
         regRdWrAddr := 0.U
-        regRequestedActionOfThePacket := 0.U
-        regRequestedActionOfThePacketValid := false.B
-        regDataValid := false.B
+        regRequestedActionOfThePacketOutput := 0.U
+        regRequestedActionOfThePacketOutputValid := false.B
+        regDataValidOutput := false.B
         regReceivingData := 0.U
         regFinishedInterpretingBuffer := false.B
 
@@ -231,12 +231,12 @@ class DebuggerPacketInterpreter(
         //
         // Read the RequestedActionOfThePacket
         //
-        regRequestedActionOfThePacket := io.rdData
+        regRequestedActionOfThePacketOutput := io.rdData
 
         //
-        // The RequestedActionOfThePacket is valid from now
+        // The RequestedActionOfThePacketOutput is valid from now
         //
-        regRequestedActionOfThePacketValid := true.B
+        regRequestedActionOfThePacketOutputValid := true.B
 
         //
         // Check if the caller needs to read the next part of
@@ -275,7 +275,7 @@ class DebuggerPacketInterpreter(
         //
         // Data outputs are now valid
         //
-        regDataValid := true.B
+        regDataValidOutput := true.B
 
         //
         // Adjust the read buffer data
@@ -312,9 +312,9 @@ class DebuggerPacketInterpreter(
   // Connect output pins to internal registers
   //
   io.rdWrAddr := regRdWrAddr
-  io.requestedActionOfThePacket := regRequestedActionOfThePacket
-  io.requestedActionOfThePacketValid := regRequestedActionOfThePacketValid
-  io.dataValid := regDataValid
+  io.requestedActionOfThePacketOutput := regRequestedActionOfThePacketOutput
+  io.requestedActionOfThePacketOutputValid := regRequestedActionOfThePacketOutputValid
+  io.dataValidOutput := regDataValidOutput
   io.receivingData := regReceivingData
   io.finishedInterpretingBuffer := regFinishedInterpretingBuffer
 
@@ -343,8 +343,9 @@ object DebuggerPacketInterpreter {
     )
 
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
-    val requestedActionOfThePacket = Wire(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
-    val dataValid = Wire(Bool())
+    val requestedActionOfThePacketOutput = Wire(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+    val requestedActionOfThePacketOutputValid = Wire(Bool())
+    val dataValidOutput = Wire(Bool())
     val receivingData = Wire(UInt(bramDataWidth.W))
     val finishedInterpretingBuffer = Wire(Bool())
 
@@ -365,14 +366,15 @@ object DebuggerPacketInterpreter {
     //
     // Configure the output signals related to interpreted packets
     //
-    requestedActionOfThePacket := debuggerPacketInterpreter.io.requestedActionOfThePacket
-    dataValid := debuggerPacketInterpreter.io.dataValid
+    requestedActionOfThePacketOutput := debuggerPacketInterpreter.io.requestedActionOfThePacketOutput
+    requestedActionOfThePacketOutputValid := debuggerPacketInterpreter.io.requestedActionOfThePacketOutputValid
+    dataValidOutput := debuggerPacketInterpreter.io.dataValidOutput
     receivingData := debuggerPacketInterpreter.io.receivingData
     finishedInterpretingBuffer := debuggerPacketInterpreter.io.finishedInterpretingBuffer
 
     //
     // Return the output result
     //
-    (rdWrAddr, requestedActionOfThePacket, dataValid, receivingData, finishedInterpretingBuffer)
+    (rdWrAddr, requestedActionOfThePacketOutput, requestedActionOfThePacketOutputValid, dataValidOutput, receivingData, finishedInterpretingBuffer)
   }
 }

@@ -67,12 +67,12 @@ class DebuggerPacketSender(
     //
     val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
     val noNewData = Input(Bool()) // should sender finish sending buffers or not?
-    val dataValid = Input(Bool()) // should sender send next buffer or not?
+    val dataValidInput = Input(Bool()) // should sender send next buffer or not?
 
     val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
     val finishedSendingBuffer = Output(Bool()) // indicate that the sender finished sending buffers and ready to send next packet
 
-    val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val requestedActionOfThePacketInput = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val sendingData = Input(UInt(bramDataWidth.W)) // data to be sent to the debugger
 
   })
@@ -210,7 +210,7 @@ class DebuggerPacketSender(
         //
         // Adjust data to write requested action of packet
         //
-        regWrData := io.requestedActionOfThePacket
+        regWrData := io.requestedActionOfThePacketInput
 
         //
         // Goes to the next section
@@ -250,14 +250,14 @@ class DebuggerPacketSender(
         //
         // Wait to receive the data
         //
-        when(io.dataValid === true.B) {
+        when(io.dataValidInput === true.B) {
 
           //
           // The data is valid, so let's send it
           //
           state := sSendData
 
-        }.elsewhen(io.noNewData === true.B && io.dataValid === true.B) {
+        }.elsewhen(io.noNewData === true.B && io.dataValidInput === true.B) {
 
           //
           // Sending data was done
@@ -345,8 +345,8 @@ object DebuggerPacketSender {
       en: Bool,
       beginSendingBuffer: Bool,
       noNewData: Bool,
-      dataValid: Bool,
-      requestedActionOfThePacket: UInt,
+      dataValidInput: Bool,
+      requestedActionOfThePacketInput: UInt,
       sendingData: UInt
   ): (Bool, UInt, Bool, UInt, Bool, Bool) = {
 
@@ -371,8 +371,8 @@ object DebuggerPacketSender {
     debuggerPacketSender.io.en := en
     debuggerPacketSender.io.beginSendingBuffer := beginSendingBuffer
     debuggerPacketSender.io.noNewData := noNewData
-    debuggerPacketSender.io.dataValid := dataValid
-    debuggerPacketSender.io.requestedActionOfThePacket := requestedActionOfThePacket
+    debuggerPacketSender.io.dataValidInput := dataValidInput
+    debuggerPacketSender.io.requestedActionOfThePacketInput := requestedActionOfThePacketInput
     debuggerPacketSender.io.sendingData := sendingData
 
     //

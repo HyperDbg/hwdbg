@@ -19,6 +19,7 @@ import chisel3._
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
+import hwdbg.types._
 
 class SendReceiveSynchronizer(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
@@ -50,21 +51,23 @@ class SendReceiveSynchronizer(
     //
     // Interpreter ports
     //
-    val interpretationDone = Output(Bool()) // interpretation done or not?
-    val foundValidPacket = Output(Bool()) // packet was valid or not
-    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val requestedActionOfThePacketOutput = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val requestedActionOfThePacketOutputValid = Output(Bool()) // whether data on the requested action is valid or not
+    val dataValidOutput = Output(Bool()) // whether data on the receiving data line is valid or not?
+    val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
+    val finishedInterpretingBuffer = Output(Bool()) // interpretation done or not?
 
     //
     // Sender ports
     //
     val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
     val noNewData = Input(Bool()) // should sender finish sending buffers or not?
-    val dataValid = Input(Bool()) // should sender send next buffer or not?
+    val dataValidInput = Input(Bool()) // should sender send next buffer or not?
 
     val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
     val finishedSendingBuffer = Output(Bool()) // indicate that the sender finished sending buffers and ready to send next packet
 
-    val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val requestedActionOfThePacketInput = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val sendingData = Input(UInt(bramDataWidth.W)) // data to be sent to the debugger
 
   })
@@ -103,17 +106,17 @@ object SendReceiveSynchronizer {
     //
     // Configure the input signals
     //
-    debuggerMainModule.io.en := en
-    debuggerMainModule.io.plInSignal := plInSignal
-    debuggerMainModule.io.rdData := rdData
+    sendReceiveSynchronizerModule.io.en := en
+    sendReceiveSynchronizerModule.io.plInSignal := plInSignal
+    sendReceiveSynchronizerModule.io.rdData := rdData
 
     //
     // Configure the output signals
     //
-    psOutInterrupt := debuggerMainModule.io.psOutInterrupt
-    rdWrAddr := debuggerMainModule.io.rdWrAddr
-    wrEna := debuggerMainModule.io.wrEna
-    wrData := debuggerMainModule.io.wrData
+    psOutInterrupt := sendReceiveSynchronizerModule.io.psOutInterrupt
+    rdWrAddr := sendReceiveSynchronizerModule.io.rdWrAddr
+    wrEna := sendReceiveSynchronizerModule.io.wrEna
+    wrData := sendReceiveSynchronizerModule.io.wrData
 
     //
     // Return the output result

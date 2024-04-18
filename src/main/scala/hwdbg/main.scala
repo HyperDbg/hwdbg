@@ -77,85 +77,16 @@ class DebuggerMain(
   })
 
   //
-  // Instantiate the remote debugger packet interpreter module
-  //
-  val (rdWrAddr, interpretationDone, foundValidPacket, requestedActionOfThePacket) =
-    DebuggerPacketInterpreter(
-      debug,
-      bramAddrWidth,
-      bramDataWidth
-    )(
-      io.en,
-      io.plInSignal,
-      io.rdData
-    )
-
-  //
-  // Assign to the output (for testing)
-  //
-  when(interpretationDone === true.B && foundValidPacket === true.B) {
-
-    when(requestedActionOfThePacket === 0x12345678.U) {
-
-      io.outputPin(0) := 1.U
-      io.outputPin(1) := 0.U
-      io.outputPin(2) := 0.U
-      io.outputPin(3) := 0.U
-    }.elsewhen(requestedActionOfThePacket === 0x12345670.U) {
-
-      io.outputPin(0) := 1.U
-      io.outputPin(1) := 1.U
-      io.outputPin(2) := 0.U
-      io.outputPin(3) := 0.U
-    }.elsewhen(requestedActionOfThePacket === 0x12345600.U) {
-
-      io.outputPin(0) := 1.U
-      io.outputPin(1) := 1.U
-      io.outputPin(2) := 1.U
-      io.outputPin(3) := 0.U
-    }.elsewhen(requestedActionOfThePacket === 0x12345000.U) {
-
-      io.outputPin(0) := 1.U
-      io.outputPin(1) := 1.U
-      io.outputPin(2) := 1.U
-      io.outputPin(3) := 1.U
-    }.otherwise {
-
-      io.outputPin(0) := 0.U
-      io.outputPin(1) := 0.U
-      io.outputPin(2) := 0.U
-      io.outputPin(3) := 0.U
-    }
-  }
-    .otherwise {
-
-      io.outputPin(0) := 0.U
-      io.outputPin(1) := 0.U
-      io.outputPin(2) := 0.U
-      io.outputPin(3) := 0.U
-    }
-
-  //
   // Configure the output signals
   //
-  for (i <- 4 until numberOfOutputPins) {
-    io.outputPin(i) := requestedActionOfThePacket(i)
+  for (i <- 0 until numberOfOutputPins) {
+    io.outputPin(i) := 0.U
   }
-
-  //
-  // Used to force chisel not to ignore the write pin of BRAM
-  //
-  when(interpretationDone && foundValidPacket) {
-    io.wrEna := true.B
-    io.wrData := requestedActionOfThePacket
-
-  }.otherwise {
-    io.wrEna := false.B
-    io.wrData := 0.U
-  }
-
-  io.rdWrAddr := rdWrAddr
+  io.wrEna := true.B
+  io.wrData := 0.U
+  io.rdWrAddr := 0.U
   io.psOutInterrupt := false.B // For now, just assert false
+
 }
 
 object DebuggerMain {
