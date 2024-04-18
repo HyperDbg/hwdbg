@@ -26,7 +26,8 @@ import hwdbg.constants._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
-    val sIdle, sInit, sReadChecksum, sReadIndicator, sReadTypeOfThePacket, sReadRequestedActionOfThePacket, sDone = Value
+    val sIdle, sReadChecksum, sReadIndicator, sReadTypeOfThePacket, sReadRequestedActionOfThePacket, sRequestedActionIsValid, sReadActionBuffer,
+        sDone = Value
   }
 }
 
@@ -65,9 +66,16 @@ class DebuggerPacketInterpreter(
     //
     // Interpretation signals
     //
-    val interpretationDone = Output(Bool()) // interpretation done or not?
-    val foundValidPacket = Output(Bool()) // packet was valid or not
     val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val requestedActionOfThePacketValid = Output(Bool()) // interpretation done or not?
+    val noNewData = Input(Bool()) // interpretation done or not?
+
+    // (this contains and edge-detection mechanism, which means reader should make it low after reading the data)
+    val readNextData = Input(Bool()) // whether the next data should be read or not?
+    val dataValid = Output(Bool()) // interpretation done or not?
+    val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
+
+    val finishedInterpretingBuffer = Output(Bool()) // interpretation done or not?
 
   })
 
@@ -80,14 +88,21 @@ class DebuggerPacketInterpreter(
   // Output pins (registers)
   //
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
-  val regInterpretationDone = RegInit(false.B)
-  val regFoundValidPacket = RegInit(false.B)
   val regRequestedActionOfThePacket = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+  val regRequestedActionOfThePacketValid = RegInit(false.B)
+  val regDataValid = RegInit(false.B)
+  val regReceivingData = RegInit(0.U(bramDataWidth.W))
+  val regFinishedInterpretingBuffer = RegInit(false.B)
 
   //
   // Rising-edge detector for interpretation signal
   //
   val risingEdgePlInSignal = io.plInSignal & !RegNext(io.plInSignal)
+
+  //
+  // Rising-edge detector for reading next data signal
+  //
+  val risingEdgeReadNextData = io.readNextData & !RegNext(io.readNextData)
 
   //
   // Structure (as wire) of the received packet buffer
@@ -115,19 +130,21 @@ class DebuggerPacketInterpreter(
         // Check whether the interrupt from the PS is received or not
         //
         when(risingEdgePlInSignal === true.B) {
-          state := sInit
+          state := sReadChecksum
         }
 
         //
         // Configure the registers in case of sIdle
         //
         regRdWrAddr := 0.U
-        regInterpretationDone := false.B
-        regFoundValidPacket := false.B
         regRequestedActionOfThePacket := 0.U
+        regRequestedActionOfThePacketValid := false.B
+        regDataValid := false.B
+        regReceivingData := 0.U
+        regFinishedInterpretingBuffer := false.B
 
       }
-      is(sInit) {
+      is(sReadChecksum) {
 
         //
         // Adjust address to read Checksum from BRAM (Not Used)
@@ -137,9 +154,9 @@ class DebuggerPacketInterpreter(
         //
         // Goes to the next section
         //
-        state := sReadChecksum
+        state := sReadIndicator
       }
-      is(sReadChecksum) {
+      is(sReadIndicator) {
 
         //
         // Adjust address to read Indicator from BRAM
@@ -149,9 +166,9 @@ class DebuggerPacketInterpreter(
         //
         // Goes to the next section
         //
-        state := sReadIndicator
+        state := sReadTypeOfThePacket
       }
-      is(sReadIndicator) {
+      is(sReadTypeOfThePacket) {
 
         //
         // Adjust address to read TypeOfThePacket from BRAM
@@ -167,7 +184,7 @@ class DebuggerPacketInterpreter(
           // Indicator of packet is valid
           // (Goes to the next section)
           //
-          state := sReadTypeOfThePacket
+          state := sReadRequestedActionOfThePacket
 
         }.otherwise {
 
@@ -176,11 +193,10 @@ class DebuggerPacketInterpreter(
           // (interpretation was done but not found a valid packet,
           // so, go to the idle state)
           //
-          regInterpretationDone := true.B
-          state := sIdle
+          state := sDone
         }
       }
-      is(sReadTypeOfThePacket) {
+      is(sReadRequestedActionOfThePacket) {
 
         //
         // Adjust address to read RequestedActionOfThePacket from BRAM
@@ -195,10 +211,9 @@ class DebuggerPacketInterpreter(
 
           //
           // Type of packet is valid
-          // All the values are now valid
           // (Goes to the next section)
           //
-          state := sReadRequestedActionOfThePacket
+          state := sRequestedActionIsValid
 
         }.otherwise {
 
@@ -207,12 +222,11 @@ class DebuggerPacketInterpreter(
           // (interpretation was done but not found a valid packet,
           // so, go to the idle state)
           //
-          regInterpretationDone := true.B
-          state := sIdle
+          state := sDone
         }
 
       }
-      is(sReadRequestedActionOfThePacket) {
+      is(sRequestedActionIsValid) {
 
         //
         // Read the RequestedActionOfThePacket
@@ -220,18 +234,69 @@ class DebuggerPacketInterpreter(
         regRequestedActionOfThePacket := io.rdData
 
         //
-        // Goes to the next section
+        // The RequestedActionOfThePacket is valid from now
         //
-        state := sDone
+        regRequestedActionOfThePacketValid := true.B
+
+        //
+        // Check if the caller needs to read the next part of
+        // the block RAM or the interpretation should be finished
+        //
+        when(risingEdgeReadNextData === true.B) {
+
+          //
+          // Adjust address to read next data to BRAM
+          //
+          regRdWrAddr := regRdWrAddr + bramDataWidth.U
+
+          //
+          // Read the next offset of the buffer
+          //
+          state := sReadActionBuffer
+
+        }.elsewhen(io.noNewData === true.B && io.readNextData === false.B) {
+
+          //
+          // No new data, the interpretation is done
+          //
+          state := sDone
+
+        }.otherwise {
+
+          //
+          // Stay at the same state
+          //
+          state := sRequestedActionIsValid
+        }
+
+      }
+      is(sReadActionBuffer) {
+
+        //
+        // Data outputs are now valid
+        //
+        regDataValid := true.B
+
+        //
+        // Adjust the read buffer data
+        //
+        regReceivingData := io.rdData
+
+        //
+        // Return to the previous state of action
+        //
+        state := sRequestedActionIsValid
 
       }
       is(sDone) {
 
         //
-        // Adjust the output bits
+        // The interpretation is done at this stage, either
+        // was successful of unsucessful, we'll release the
+        // sharing bram resource by indicating that the intpreter
+        // module is no longer using the bram line
         //
-        regInterpretationDone := true.B
-        regFoundValidPacket := true.B
+        regFinishedInterpretingBuffer := true.B
 
         //
         // Go to the idle state
@@ -247,9 +312,11 @@ class DebuggerPacketInterpreter(
   // Connect output pins to internal registers
   //
   io.rdWrAddr := regRdWrAddr
-  io.interpretationDone := regInterpretationDone
-  io.foundValidPacket := regFoundValidPacket
   io.requestedActionOfThePacket := regRequestedActionOfThePacket
+  io.requestedActionOfThePacketValid := regRequestedActionOfThePacketValid
+  io.dataValid := regDataValid
+  io.receivingData := regReceivingData
+  io.finishedInterpretingBuffer := regFinishedInterpretingBuffer
 
 }
 
@@ -262,8 +329,10 @@ object DebuggerPacketInterpreter {
   )(
       en: Bool,
       plInSignal: Bool,
-      rdData: UInt
-  ): (UInt, Bool, Bool, UInt) = {
+      rdData: UInt,
+      noNewData: Bool,
+      readNextData: Bool
+  ): (UInt, UInt, Bool, Bool, UInt, Bool) = {
 
     val debuggerPacketInterpreter = Module(
       new DebuggerPacketInterpreter(
@@ -274,11 +343,10 @@ object DebuggerPacketInterpreter {
     )
 
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
-    val interpretationDone = Wire(Bool())
-    val foundValidPacket = Wire(Bool())
-    val requestedActionOfThePacket = Wire(
-      UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)
-    )
+    val requestedActionOfThePacket = Wire(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+    val dataValid = Wire(Bool())
+    val receivingData = Wire(UInt(bramDataWidth.W))
+    val finishedInterpretingBuffer = Wire(Bool())
 
     //
     // Configure the input signals
@@ -286,6 +354,8 @@ object DebuggerPacketInterpreter {
     debuggerPacketInterpreter.io.en := en
     debuggerPacketInterpreter.io.plInSignal := plInSignal
     debuggerPacketInterpreter.io.rdData := rdData
+    debuggerPacketInterpreter.io.noNewData := noNewData
+    debuggerPacketInterpreter.io.readNextData := readNextData
 
     //
     // Configure the output signals
@@ -295,13 +365,14 @@ object DebuggerPacketInterpreter {
     //
     // Configure the output signals related to interpreted packets
     //
-    interpretationDone := debuggerPacketInterpreter.io.interpretationDone
-    foundValidPacket := debuggerPacketInterpreter.io.foundValidPacket
     requestedActionOfThePacket := debuggerPacketInterpreter.io.requestedActionOfThePacket
+    dataValid := debuggerPacketInterpreter.io.dataValid
+    receivingData := debuggerPacketInterpreter.io.receivingData
+    finishedInterpretingBuffer := debuggerPacketInterpreter.io.finishedInterpretingBuffer
 
     //
     // Return the output result
     //
-    (rdWrAddr, interpretationDone, foundValidPacket, requestedActionOfThePacket)
+    (rdWrAddr, requestedActionOfThePacket, dataValid, receivingData, finishedInterpretingBuffer)
   }
 }

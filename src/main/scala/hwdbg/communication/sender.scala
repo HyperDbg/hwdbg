@@ -72,9 +72,6 @@ class DebuggerPacketSender(
     val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
     val finishedSendingBuffer = Output(Bool()) // indicate that the sender finished sending buffers and ready to send next packet
 
-    //
-    // Actual Data to be sent
-    //
     val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val sendingData = Input(UInt(bramDataWidth.W)) // data to be sent to the debugger
 

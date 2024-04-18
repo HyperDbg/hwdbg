@@ -47,6 +47,26 @@ class SendReceiveSynchronizer(
     val wrEna = Output(Bool()) // enable writing
     val wrData = Output(UInt(bramDataWidth.W)) // write data
 
+    //
+    // Interpreter ports
+    //
+    val interpretationDone = Output(Bool()) // interpretation done or not?
+    val foundValidPacket = Output(Bool()) // packet was valid or not
+    val requestedActionOfThePacket = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+
+    //
+    // Sender ports
+    //
+    val beginSendingBuffer = Input(Bool()) // should sender start sending buffers or not?
+    val noNewData = Input(Bool()) // should sender finish sending buffers or not?
+    val dataValid = Input(Bool()) // should sender send next buffer or not?
+
+    val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
+    val finishedSendingBuffer = Output(Bool()) // indicate that the sender finished sending buffers and ready to send next packet
+
+    val requestedActionOfThePacket = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
+    val sendingData = Input(UInt(bramDataWidth.W)) // data to be sent to the debugger
+
   })
 
   //
