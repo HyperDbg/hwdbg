@@ -274,6 +274,36 @@ class SendReceiveSynchronizer(
       }
     }
   }
+
+  // ---------------------------------------------------------------------
+
+  //
+  // Connect output pins (Interrupt)
+  //
+  io.psOutInterrupt := psOutInterrupt
+
+  //
+  // Connect output pins (BRAM)
+  //
+  io.rdWrAddr := sharedRdWrAddr
+  io.wrEna := wrEna
+  io.wrData := wrData
+
+  //
+  // Connect output pins (Receiver)
+  //
+  io.requestedActionOfThePacketOutput := requestedActionOfThePacketOutput
+  io.requestedActionOfThePacketOutputValid := requestedActionOfThePacketOutputValid
+  io.dataValidOutput := dataValidOutput
+  io.receivingData := receivingData
+  io.finishedReceivingBuffer := finishedReceivingBuffer
+
+  //
+  // Connect output pins (Sender)
+  //
+  io.sendWaitForBuffer := sendWaitForBuffer
+  io.finishedSendingBuffer := finishedSendingBuffer
+
 }
 
 object SendReceiveSynchronizer {
