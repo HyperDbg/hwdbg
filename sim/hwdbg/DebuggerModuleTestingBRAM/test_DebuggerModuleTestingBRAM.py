@@ -1,4 +1,18 @@
-# test_DebuggerModuleTestingBRAM.py
+##
+# @file test_DebuggerModuleTestingBRAM.py
+#
+# @author Sina Karvandi (sina@hyperdbg.org)
+#
+# @brief Testing module for DebuggerModuleTestingBRAM
+#
+# @details
+#
+# @version 0.1
+#
+# @date 2024-04-21
+#
+# @copyright This project is released under the GNU Public License v3.
+#
 
 import random
 

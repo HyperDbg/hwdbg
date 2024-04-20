@@ -64,14 +64,14 @@ The generated code for the debugger can be found in the `generated` directory.
 To test **hwdbg**, [cocotb](https://www.cocotb.org/) should be installed. After that, first, run the debugger (generated SystemVerilog files) and then run the following commands:
 
 ```sh
-cd sim
-./test_module.sh
+cd sim/hwdbg/DebuggerModuleTestingBRAM
+./test.sh
 ```
 
-The above command generates a waves file at `./sim/sim_build/DebuggerModuleTestingBRAM.fst` which can be read using [GTKWave](https://gtkwave.sourceforge.net/).
+The above command generates a waves file at `./sim/hwdbg/DebuggerModuleTestingBRAM/sim_build/DebuggerModuleTestingBRAM.fst` which can be read using [GTKWave](https://gtkwave.sourceforge.net/).
 
 ```sh
-cd sim
+cd sim/hwdbg/DebuggerModuleTestingBRAM
 gtkwave ./sim_build/DebuggerModuleTestingBRAM.fst
 ```
 
