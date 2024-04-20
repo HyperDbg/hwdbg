@@ -376,6 +376,13 @@ object DebuggerPacketReceiver {
     //
     // Return the output result
     //
-    (rdWrAddr, requestedActionOfThePacketOutput, requestedActionOfThePacketOutputValid, dataValidOutput, receivingData, finishedReceivingBuffer)
+    (
+      rdWrAddr,
+      requestedActionOfThePacketOutput,
+      requestedActionOfThePacketOutputValid,
+      dataValidOutput,
+      receivingData,
+      finishedReceivingBuffer
+    )
   }
 }

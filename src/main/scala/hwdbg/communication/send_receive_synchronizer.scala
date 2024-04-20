@@ -62,7 +62,7 @@ class SendReceiveSynchronizer(
     val wrData = Output(UInt(bramDataWidth.W)) // write data
 
     //
-    // Receiver signals
+    // Receiver ports
     //
     val requestedActionOfThePacketOutput = Output(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val requestedActionOfThePacketOutputValid = Output(Bool()) // whether data on the requested action is valid or not
@@ -73,8 +73,6 @@ class SendReceiveSynchronizer(
     val dataValidOutput = Output(Bool()) // whether data on the receiving data line is valid or not?
     val receivingData = Output(UInt(bramDataWidth.W)) // data to be sent to the reader
 
-    val finishedReceivingBuffer = Output(Bool()) // Receiving is done or not?
-
     //
     // Sender ports
     //
@@ -83,7 +81,6 @@ class SendReceiveSynchronizer(
     val dataValidInput = Input(Bool()) // should sender send next buffer or not?
 
     val sendWaitForBuffer = Output(Bool()) // should the external module send next buffer or not?
-    val finishedSendingBuffer = Output(Bool()) // indicate that the sender finished sending buffers and ready to send next packet
 
     val requestedActionOfThePacketInput = Input(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W)) // the requested action
     val sendingData = Input(UInt(bramDataWidth.W)) // data to be sent to the debugger
@@ -296,13 +293,11 @@ class SendReceiveSynchronizer(
   io.requestedActionOfThePacketOutputValid := requestedActionOfThePacketOutputValid
   io.dataValidOutput := dataValidOutput
   io.receivingData := receivingData
-  io.finishedReceivingBuffer := finishedReceivingBuffer
 
   //
   // Connect output pins (Sender)
   //
   io.sendWaitForBuffer := sendWaitForBuffer
-  io.finishedSendingBuffer := finishedSendingBuffer
 
 }
 
@@ -315,8 +310,15 @@ object SendReceiveSynchronizer {
   )(
       en: Bool,
       plInSignal: Bool,
-      rdData: UInt
-  ): (Bool, UInt, Bool, UInt) = {
+      rdData: UInt,
+      noNewDataReceiver: Bool,
+      readNextData: Bool,
+      beginSendingBuffer: Bool,
+      noNewDataSender: Bool,
+      dataValidInput: Bool,
+      requestedActionOfThePacketInput: UInt,
+      sendingData: UInt
+  ): (Bool, UInt, Bool, UInt, UInt, Bool, Bool, UInt, Bool) = {
 
     val sendReceiveSynchronizerModule = Module(
       new SendReceiveSynchronizer(
@@ -327,9 +329,17 @@ object SendReceiveSynchronizer {
     )
 
     val psOutInterrupt = Wire(Bool())
+
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
     val wrEna = Wire(Bool())
     val wrData = Wire(UInt(bramDataWidth.W))
+
+    val requestedActionOfThePacketOutput = Wire(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+    val requestedActionOfThePacketOutputValid = Wire(Bool())
+    val dataValidOutput = Wire(Bool())
+    val receivingData = Wire(UInt(bramDataWidth.W))
+
+    val sendWaitForBuffer = Wire(Bool())
 
     //
     // Configure the input signals
@@ -337,6 +347,13 @@ object SendReceiveSynchronizer {
     sendReceiveSynchronizerModule.io.en := en
     sendReceiveSynchronizerModule.io.plInSignal := plInSignal
     sendReceiveSynchronizerModule.io.rdData := rdData
+    sendReceiveSynchronizerModule.io.noNewDataReceiver := noNewDataReceiver
+    sendReceiveSynchronizerModule.io.readNextData := readNextData
+    sendReceiveSynchronizerModule.io.beginSendingBuffer := beginSendingBuffer
+    sendReceiveSynchronizerModule.io.noNewDataSender := noNewDataSender
+    sendReceiveSynchronizerModule.io.dataValidInput := dataValidInput
+    sendReceiveSynchronizerModule.io.requestedActionOfThePacketInput := requestedActionOfThePacketInput
+    sendReceiveSynchronizerModule.io.sendingData := sendingData
 
     //
     // Configure the output signals
@@ -346,9 +363,26 @@ object SendReceiveSynchronizer {
     wrEna := sendReceiveSynchronizerModule.io.wrEna
     wrData := sendReceiveSynchronizerModule.io.wrData
 
+    requestedActionOfThePacketOutput := sendReceiveSynchronizerModule.io.requestedActionOfThePacketOutput
+    requestedActionOfThePacketOutputValid := sendReceiveSynchronizerModule.io.requestedActionOfThePacketOutputValid
+    dataValidOutput := sendReceiveSynchronizerModule.io.dataValidOutput
+    receivingData := sendReceiveSynchronizerModule.io.receivingData
+
+    sendWaitForBuffer := sendReceiveSynchronizerModule.io.sendWaitForBuffer
+
     //
     // Return the output result
     //
-    (psOutInterrupt, rdWrAddr, wrEna, wrData)
+    (
+      psOutInterrupt,
+      rdWrAddr,
+      wrEna,
+      wrData,
+      requestedActionOfThePacketOutput,
+      requestedActionOfThePacketOutputValid,
+      dataValidOutput,
+      receivingData,
+      sendWaitForBuffer
+    )
   }
 }

@@ -205,6 +205,14 @@ object DebuggerPacketInterpreter {
     //
     // Return the output result
     //
-    (noNewDataReceiver, readNextData, beginSendingBuffer, noNewDataSender, dataValidOutput, requestedActionOfThePacketOutput, sendingData)
+    (
+      noNewDataReceiver,
+      readNextData,
+      beginSendingBuffer,
+      noNewDataSender,
+      dataValidOutput,
+      requestedActionOfThePacketOutput,
+      sendingData
+    )
   }
 }

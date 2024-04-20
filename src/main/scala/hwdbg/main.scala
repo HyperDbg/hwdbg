@@ -19,7 +19,9 @@ import chisel3._
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
+import hwdbg.types._
 import hwdbg.communication._
+import hwdbg.communication.interpreter._
 
 class DebuggerMain(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
@@ -77,15 +79,92 @@ class DebuggerMain(
   })
 
   //
+  // Wire signals for the synchronizer
+  //
+  val requestedActionOfThePacketOutput = Wire(UInt(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+  val requestedActionOfThePacketOutputValid = Wire(Bool())
+  val dataValidOutput = Wire(Bool())
+  val receivingData = Wire(UInt(bramDataWidth.W))
+  val sendWaitForBuffer = Wire(Bool())
+
+  //
+  // Create instance from interpreter
+  //
+  val (
+    noNewDataReceiver,
+    readNextData,
+    beginSendingBuffer,
+    noNewDataSender,
+    dataValidInterpreterOutput,
+    requestedActionOfThePacketInterpreterOutput,
+    sendingData
+  ) =
+    DebuggerPacketInterpreter(
+      debug,
+      bramAddrWidth,
+      bramDataWidth
+    )(
+      io.en,
+      requestedActionOfThePacketOutput,
+      requestedActionOfThePacketOutputValid,
+      dataValidOutput,
+      receivingData,
+      sendWaitForBuffer
+    )
+
+  //
+  // Create instance from synchronizer
+  //
+  val (
+    psOutInterrupt,
+    rdWrAddr,
+    wrEna,
+    wrData,
+    outRequestedActionOfThePacketOutput,
+    outRequestedActionOfThePacketOutputValid,
+    outDataValidOutput,
+    outReceivingData,
+    outSendWaitForBuffer
+  ) =
+    SendReceiveSynchronizer(
+      debug,
+      bramAddrWidth,
+      bramDataWidth
+    )(
+      io.en,
+      io.plInSignal,
+      io.rdData,
+      noNewDataReceiver,
+      readNextData,
+      beginSendingBuffer,
+      noNewDataSender,
+      dataValidInterpreterOutput,
+      requestedActionOfThePacketInterpreterOutput,
+      sendingData
+    )
+
+  //
+  // Connect synchronizer signals to wires
+  //
+  requestedActionOfThePacketOutput := outRequestedActionOfThePacketOutput
+  requestedActionOfThePacketOutputValid := outRequestedActionOfThePacketOutputValid
+  dataValidOutput := outDataValidOutput
+  receivingData := outReceivingData
+  sendWaitForBuffer := outSendWaitForBuffer
+
+  // ---------------------------------------------------------------------
+
+  //
   // Configure the output signals
   //
   for (i <- 0 until numberOfOutputPins) {
     io.outputPin(i) := 0.U
   }
-  io.wrEna := true.B
-  io.wrData := 0.U
-  io.rdWrAddr := 0.U
-  io.psOutInterrupt := false.B // For now, just assert false
+
+  io.wrEna := wrEna
+  io.wrData := wrData
+  io.rdWrAddr := rdWrAddr
+  io.psOutInterrupt := psOutInterrupt
 
 }
 
