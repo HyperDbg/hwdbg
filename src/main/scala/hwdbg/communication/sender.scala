@@ -16,7 +16,7 @@
 package hwdbg.communication
 
 import chisel3._
-import chisel3.util.{switch, is}
+import chisel3.util.{switch, is, log2Ceil}
 import circt.stage.ChiselStage
 
 import hwdbg.configs._
@@ -105,6 +105,12 @@ class DebuggerPacketSender(
   val regIsSendingDataStarted = RegInit(false.B)
 
   //
+  // Used to hold the transferred length of the indicator
+  //
+  val lengthOfIndicator: Int = new DebuggerRemotePacket().Indicator.getWidth;
+  val regTransferredIndicatorLength = RegInit(0.U((log2Ceil(lengthOfIndicator) + 1).W))
+
+  //
   // Structure (as wire) of the received packet buffer
   //
   val sendingPacketBuffer = WireInit(0.U.asTypeOf(new DebuggerRemotePacket()))
@@ -159,27 +165,66 @@ class DebuggerPacketSender(
         regWrData := 0.U // Checksum is ignored
 
         //
+        // Reset the transferred bytes of the indicator
+        //
+        regTransferredIndicatorLength := 0.U
+
+        //
         // Goes to the next section
         //
         state := sWriteIndicator
       }
       is(sWriteIndicator) {
 
-        //
-        // Adjust address to write Indicator to BRAM
-        //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
+        if (bramDataWidth >= lengthOfIndicator) {
 
-        //
-        // Adjust data to write Indicator
-        //
-        regWrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
+          //
+          // Adjust address to write Indicator to BRAM
+          //
+          regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
 
-        //
-        // Goes to the next section
-        //
-        state := sWriteTypeOfThePacket
+          //
+          // Adjust data to write Indicator
+          //
+          regWrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
 
+          //
+          // Goes to the next section
+          //
+          state := sWriteTypeOfThePacket
+
+        } else {
+
+          //
+          // Adjust address to write Indicator to BRAM
+          //
+          regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
+
+          //
+          // Adjust data to write Indicator
+          //
+          regWrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U >> regTransferredIndicatorLength
+
+          //
+          // Add to the length transfered
+          //
+          regTransferredIndicatorLength := regTransferredIndicatorLength + bramDataWidth.U
+
+          when(regTransferredIndicatorLength >= lengthOfIndicator.U) {
+
+            //
+            // Goes to the next section
+            //
+            state := sWriteTypeOfThePacket
+
+          }.otherwise {
+
+            //
+            // Stay at the same state
+            //
+            state := sWriteIndicator
+          }
+        }
       }
       is(sWriteTypeOfThePacket) {
 

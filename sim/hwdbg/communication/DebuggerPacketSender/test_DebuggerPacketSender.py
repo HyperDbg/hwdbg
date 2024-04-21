@@ -44,9 +44,9 @@ async def DebuggerModuleTestingBRAM_test(dut):
 
     # Assert initial output is unknown
     assert LogicArray(dut.io_psOutInterrupt.value) == LogicArray("X")
-    assert LogicArray(dut.io_rdWrAddr.value) == LogicArray("X")
+    assert LogicArray(dut.io_rdWrAddr.value) == LogicArray("XXXXXXXXXXXXX")
     assert LogicArray(dut.io_wrEna.value) == LogicArray("X")
-    assert LogicArray(dut.io_wrData.value) == LogicArray("X")
+    assert LogicArray(dut.io_wrData.value) == LogicArray("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     assert LogicArray(dut.io_sendWaitForBuffer.value) == LogicArray("X")
     assert LogicArray(dut.io_finishedSendingBuffer.value) == LogicArray("X")
 
@@ -88,8 +88,13 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # Synchronize with the clock. This will regisiter the initial values
     await RisingEdge(dut.clock)
     
+    expected_val = 0  # Matches initial input value
     for i in range(10):
+        val = random.randint(0, 1)
+        dut.io_sendingData.value = val  # Assign the random value val to the input port d
         await RisingEdge(dut.clock)
+        #assert dut.io_inputPin_0.value == expected_val, f"output q was incorrect on the {i}th cycle"
+        expected_val = val # Save random value for next RisingEdge
 
     # Check the final input on the next clock
     await RisingEdge(dut.clock)
