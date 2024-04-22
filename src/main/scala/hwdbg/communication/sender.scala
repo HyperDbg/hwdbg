@@ -83,14 +83,19 @@ class DebuggerPacketSender(
   val state = RegInit(sIdle)
 
   //
-  // Output pins (registers)
+  // Output pins
   //
-  val regPsOutInterrupt = RegInit(false.B)
+  val psOutInterrupt = WireInit(false.B)
+  val wrEna = WireInit(false.B)
+  val wrData = WireInit(0.U(bramDataWidth.W))
+  val sendWaitForBuffer = WireInit(false.B)
+  val finishedSendingBuffer = WireInit(false.B)
+  val rdWrAddr = WireInit(0.U(bramAddrWidth.W))
+
+  //
+  // Temporary address holder (register)
+  //
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
-  val regWrEna = RegInit(false.B)
-  val regWrData = RegInit(0.U(bramDataWidth.W))
-  val regSendWaitForBuffer = RegInit(false.B)
-  val regFinishedSendingBuffer = RegInit(false.B)
 
   //
   // Rising-edge detector for start sending signal
@@ -132,14 +137,15 @@ class DebuggerPacketSender(
         }
 
         //
-        // Configure the registers in case of sIdle
+        // Configure the outputs in case of sIdle
         //
-        regPsOutInterrupt := false.B
+        psOutInterrupt := false.B
+        rdWrAddr := 0.U
         regRdWrAddr := 0.U
-        regWrEna := false.B
-        regWrData := 0.U
-        regSendWaitForBuffer := false.B
-        regFinishedSendingBuffer := false.B
+        wrEna := false.B
+        wrData := 0.U
+        sendWaitForBuffer := false.B
+        finishedSendingBuffer := false.B
 
         //
         // Sending data has not been started
@@ -152,17 +158,17 @@ class DebuggerPacketSender(
         //
         // Enable writing to the BRAM
         //
-        regWrEna := true.B
+        wrEna := true.B
 
         //
         // Adjust address to write Checksum to BRAM (Not Used)
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.checksum).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.checksum).U
 
         //
         // Adjust data to write Checksum
         //
-        regWrData := 0.U // Checksum is ignored
+        wrData := 0.U // Checksum is ignored
 
         //
         // Reset the transferred bytes of the indicator
@@ -179,14 +185,19 @@ class DebuggerPacketSender(
         if (bramDataWidth >= lengthOfIndicator) {
 
           //
+          // Enable writing to the BRAM
+          //
+          wrEna := true.B
+
+          //
           // Adjust address to write Indicator to BRAM
           //
-          regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
+          rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
 
           //
           // Adjust data to write Indicator
           //
-          regWrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
+          wrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U
 
           //
           // Goes to the next section
@@ -196,14 +207,20 @@ class DebuggerPacketSender(
         } else {
 
           //
-          // Adjust address to write Indicator to BRAM
+          // Enable writing to the BRAM
           //
-          regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U
+          wrEna := true.B
+
+          //
+          // Adjust address to write Indicator to BRAM (Address granularity is in the byte format so,
+          // it'll be divided by 8 or shift to right by 3)
+          //
+          rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.indicator).U + (regTransferredIndicatorLength >> 3)
 
           //
           // Adjust data to write Indicator
           //
-          regWrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U >> regTransferredIndicatorLength
+          wrData := HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U >> regTransferredIndicatorLength
 
           //
           // Add to the length transfered
@@ -211,6 +228,11 @@ class DebuggerPacketSender(
           regTransferredIndicatorLength := regTransferredIndicatorLength + bramDataWidth.U
 
           when(regTransferredIndicatorLength >= lengthOfIndicator.U) {
+
+            //
+            // Disable writing to the BRAM
+            //
+            wrEna := false.B
 
             //
             // Goes to the next section
@@ -229,15 +251,20 @@ class DebuggerPacketSender(
       is(sWriteTypeOfThePacket) {
 
         //
+        // Enable writing to the BRAM
+        //
+        wrEna := true.B
+
+        //
         // Adjust address to write type of packet to BRAM
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.typeOfThePacket).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.typeOfThePacket).U
 
         //
         // Adjust data to write type of packet
         //
         val packetType: DebuggerRemotePacketType.Value = DebuggerRemotePacketType.DEBUGGEE_TO_DEBUGGER_HARDWARE_LEVEL
-        regWrData := packetType.id.U
+        wrData := packetType.id.U
 
         //
         // Goes to the next section
@@ -248,14 +275,19 @@ class DebuggerPacketSender(
       is(sWriteRequestedActionOfThePacket) {
 
         //
+        // Enable writing to the BRAM
+        //
+        wrEna := true.B
+
+        //
         // Adjust address to write requested action of packet to BRAM
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.requestedActionOfThePacket).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PL_TO_PS_COMMUNICATION + sendingPacketBuffer.Offset.requestedActionOfThePacket).U
 
         //
         // Adjust data to write requested action of packet
         //
-        regWrData := io.requestedActionOfThePacketInput
+        wrData := io.requestedActionOfThePacketInput
 
         //
         // Goes to the next section
@@ -268,12 +300,12 @@ class DebuggerPacketSender(
         //
         // Disable writing to the BRAM
         //
-        regWrEna := false.B
+        wrEna := false.B
 
         //
         // Indicate that the module is waiting for data
         //
-        regSendWaitForBuffer := true.B
+        sendWaitForBuffer := true.B
 
         //
         // Check whether sending actual data already started or not
@@ -323,22 +355,23 @@ class DebuggerPacketSender(
         //
         // Not waiting for the buffer at this state
         //
-        regSendWaitForBuffer := false.B
+        sendWaitForBuffer := false.B
 
         //
         // Enable writing to the BRAM
         //
-        regWrEna := true.B
+        wrEna := true.B
 
         //
         // Adjust address to write next data to BRAM
         //
+        rdWrAddr := regRdWrAddr
         regRdWrAddr := regRdWrAddr + bramDataWidth.U
 
         //
         // Adjust data to write as the sending data
         //
-        regWrData := io.sendingData
+        wrData := io.sendingData
 
         //
         // Again go to the state for waiting for new data
@@ -351,12 +384,12 @@ class DebuggerPacketSender(
         //
         // Adjust the output bits
         //
-        regFinishedSendingBuffer := true.B
+        finishedSendingBuffer := true.B
 
         //
         // Interrupt the PS
         //
-        regPsOutInterrupt := true.B
+        psOutInterrupt := true.B
 
         //
         // Go to the idle state
@@ -371,12 +404,12 @@ class DebuggerPacketSender(
   //
   // Connect output pins to internal registers
   //
-  io.psOutInterrupt := regPsOutInterrupt
-  io.rdWrAddr := regRdWrAddr
-  io.wrEna := regWrEna
-  io.wrData := regWrData
-  io.sendWaitForBuffer := regSendWaitForBuffer
-  io.finishedSendingBuffer := regFinishedSendingBuffer
+  io.psOutInterrupt := psOutInterrupt
+  io.rdWrAddr := rdWrAddr
+  io.wrEna := wrEna
+  io.wrData := wrData
+  io.sendWaitForBuffer := sendWaitForBuffer
+  io.finishedSendingBuffer := finishedSendingBuffer
 
 }
 
