@@ -93,9 +93,10 @@ class DebuggerPacketSender(
   val rdWrAddr = WireInit(0.U(bramAddrWidth.W))
 
   //
-  // Temporary address holder (register)
+  // Temporary address and data holder (register)
   //
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
+  val regDataToSend = RegInit(0.U(bramDataWidth.W))
 
   //
   // Rising-edge detector for start sending signal
@@ -325,21 +326,27 @@ class DebuggerPacketSender(
         }
 
         //
-        // Wait to receive the data
+        // Wait to receive the data or check whether sending was done at this state
+        // (Two states will go us to the 'done' state)
         //
-        when(io.dataValidInput === true.B) {
-
-          //
-          // The data is valid, so let's send it
-          //
-          state := sSendData
-
-        }.elsewhen(io.noNewDataSender === true.B && io.dataValidInput === true.B) {
+        when(io.noNewDataSender === true.B) {
 
           //
           // Sending data was done
           //
           state := sDone
+
+        }.elsewhen(io.dataValidInput === true.B) {
+
+          //
+          // Store the data to send in a register
+          //
+          regDataToSend := io.sendingData
+
+          //
+          // The data is valid, so let's send it
+          //
+          state := sSendData
 
         }.otherwise {
 
@@ -363,20 +370,35 @@ class DebuggerPacketSender(
         wrEna := true.B
 
         //
-        // Adjust address to write next data to BRAM
+        // Adjust address to write next data to BRAM (Address granularity is in the byte format so,
+        // it'll be divided by 8 or shift to right by 3)
         //
         rdWrAddr := regRdWrAddr
-        regRdWrAddr := regRdWrAddr + bramDataWidth.U
+        regRdWrAddr := regRdWrAddr + (bramDataWidth >> 3).U
 
         //
         // Adjust data to write as the sending data
         //
-        wrData := io.sendingData
+        wrData := regDataToSend
 
         //
-        // Again go to the state for waiting for new data
+        // Check whether sending was done at this state (Two states will go us to the 'done' state)
         //
-        state := sWaitToGetData
+        when(io.noNewDataSender === true.B) {
+
+          //
+          // Sending data was done
+          //
+          state := sDone
+
+        }.otherwise {
+
+          //
+          // Again go to the state for waiting for new data
+          //
+          state := sWaitToGetData
+
+        }
 
       }
       is(sDone) {
