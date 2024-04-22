@@ -28,3 +28,15 @@ object LogInfo {
     println("[*] debug msg: " + message)
   }
 }
+
+object BitwiseFunction {
+
+  def printFirstNBits(num: Long, n: Int): Long = {
+
+    val mask = (1L << n) - 1 // Create a bitmask with the first 'n' bits set to 1
+    val shifted = num >>> (java.lang.Long.SIZE - n) // Shift the bits to the right to keep the first 'n' bits
+    val firstNBits = shifted & mask // Extract the first 'n' bits by performing a bitwise AND operation
+
+    firstNBits
+  }
+}

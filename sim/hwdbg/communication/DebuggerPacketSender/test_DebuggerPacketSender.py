@@ -39,7 +39,7 @@ from cocotb.types import LogicArray
 '''
 
 @cocotb.test()
-async def DebuggerModuleTestingBRAM_test(dut):
+async def DebuggerPacketSender_test(dut):
     """Test DebuggerPacketSender module"""
 
     #
@@ -84,7 +84,7 @@ async def DebuggerModuleTestingBRAM_test(dut):
 
     for test_number in range(10):
 
-        dut._log.info("Enable sending data chip (" + str(test_number) + ")")
+        dut._log.info("Enable sending data on the chip (" + str(test_number) + ")")
 
         #
         # Still there is data to send

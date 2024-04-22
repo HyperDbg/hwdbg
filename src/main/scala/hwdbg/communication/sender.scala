@@ -113,7 +113,7 @@ class DebuggerPacketSender(
   //
   // Used to hold the transferred length of the indicator
   //
-  val lengthOfIndicator: Int = new DebuggerRemotePacket().Indicator.getWidth;
+  val lengthOfIndicator: Int = new DebuggerRemotePacket().Indicator.getWidth
   val regTransferredIndicatorLength = RegInit(0.U((log2Ceil(lengthOfIndicator) + 1).W))
 
   //
@@ -494,28 +494,4 @@ object DebuggerPacketSender {
     //
     (psOutInterrupt, rdWrAddr, wrEna, wrData, sendWaitForBuffer, finishedSendingBuffer)
   }
-}
-
-object SenderModule extends App {
-
-  //
-  // Generate hwdbg verilog files
-  //
-  println(
-    ChiselStage.emitSystemVerilog(
-      new DebuggerPacketSender(
-        DebuggerConfigurations.ENABLE_DEBUG,
-        DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
-      ),
-      firtoolOpts = Array(
-        "-disable-all-randomization",
-        "--lowering-options=disallowLocalVariables", // because icarus doesn't support 'automatic logic', this option prevents such logics
-        "-strip-debug-info",
-        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
-        "-o",
-        "generated/"
-      )
-    )
-  )
 }

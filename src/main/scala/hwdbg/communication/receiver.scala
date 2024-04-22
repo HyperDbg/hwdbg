@@ -86,14 +86,15 @@ class DebuggerPacketReceiver(
   val state = RegInit(sIdle)
 
   //
-  // Output pins (registers)
+  // Output pins
   //
+  val rdWrAddr = WireInit(0.U(bramAddrWidth.W))
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
-  val regRequestedActionOfThePacketOutput = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
-  val regRequestedActionOfThePacketOutputValid = RegInit(false.B)
-  val regDataValidOutput = RegInit(false.B)
-  val regReceivingData = RegInit(0.U(bramDataWidth.W))
-  val regFinishedReceivingBuffer = RegInit(false.B)
+  val finishedReceivingBuffer = WireInit(false.B)
+  val requestedActionOfThePacketOutput = WireInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+  val requestedActionOfThePacketOutputValid = WireInit(false.B)
+  val dataValidOutput = WireInit(false.B)
+  val receivingData = WireInit(0.U(bramDataWidth.W))
 
   //
   // Rising-edge detector for start receiving signal
@@ -135,14 +136,14 @@ class DebuggerPacketReceiver(
         }
 
         //
-        // Configure the registers in case of sIdle
+        // Configure the output pins in case of sIdle
         //
-        regRdWrAddr := 0.U
-        regRequestedActionOfThePacketOutput := 0.U
-        regRequestedActionOfThePacketOutputValid := false.B
-        regDataValidOutput := false.B
-        regReceivingData := 0.U
-        regFinishedReceivingBuffer := false.B
+        rdWrAddr := 0.U
+        requestedActionOfThePacketOutput := 0.U
+        requestedActionOfThePacketOutputValid := false.B
+        dataValidOutput := false.B
+        receivingData := 0.U
+        finishedReceivingBuffer := false.B
 
       }
       is(sReadChecksum) {
@@ -150,7 +151,7 @@ class DebuggerPacketReceiver(
         //
         // Adjust address to read Checksum from BRAM (Not Used)
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.checksum).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.checksum).U
 
         //
         // Goes to the next section
@@ -162,7 +163,7 @@ class DebuggerPacketReceiver(
         //
         // Adjust address to read Indicator from BRAM
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.indicator).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.indicator).U
 
         //
         // Goes to the next section
@@ -174,12 +175,15 @@ class DebuggerPacketReceiver(
         //
         // Adjust address to read TypeOfThePacket from BRAM
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.typeOfThePacket).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.typeOfThePacket).U
 
         //
         // Check whether the indicator is valid or not
         //
-        when(io.rdData === HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET.U) {
+        LogInfo(debug)(
+          f"Comparing first 0x${BitwiseFunction.printFirstNBits(HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET, bramDataWidth)}%x bits of the indicator"
+        )
+        when(io.rdData === BitwiseFunction.printFirstNBits(HyperDbgSharedConstants.INDICATOR_OF_HYPERDBG_PACKET, bramDataWidth).U) {
 
           //
           // Indicator of packet is valid
@@ -190,7 +194,7 @@ class DebuggerPacketReceiver(
         }.otherwise {
 
           //
-          // Type of packet is not valid
+          // Indicator of packet is not valid
           // (Receiving was done but not found a valid packet,
           // so, go to the idle state)
           //
@@ -202,7 +206,12 @@ class DebuggerPacketReceiver(
         //
         // Adjust address to read RequestedActionOfThePacket from BRAM
         //
-        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.requestedActionOfThePacket).U
+        rdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.requestedActionOfThePacket).U
+
+        //
+        // Save the address into a register
+        //
+        regRdWrAddr := (MemoryCommunicationConfigurations.BASE_ADDRESS_OF_PS_TO_PL_COMMUNICATION + receivedPacketBuffer.Offset.requestedActionOfThePacket + (bramDataWidth >> 3)).U
 
         //
         // Check whether the type of the packet is valid or not
@@ -232,12 +241,12 @@ class DebuggerPacketReceiver(
         //
         // Read the RequestedActionOfThePacket
         //
-        regRequestedActionOfThePacketOutput := io.rdData
+        requestedActionOfThePacketOutput := io.rdData
 
         //
         // The RequestedActionOfThePacketOutput is valid from now
         //
-        regRequestedActionOfThePacketOutputValid := true.B
+        requestedActionOfThePacketOutputValid := true.B
 
         //
         // Check if the caller needs to read the next part of
@@ -248,7 +257,8 @@ class DebuggerPacketReceiver(
           //
           // Adjust address to read next data to BRAM
           //
-          regRdWrAddr := regRdWrAddr + bramDataWidth.U
+          rdWrAddr := regRdWrAddr
+          regRdWrAddr := regRdWrAddr + (bramDataWidth >> 3).U
 
           //
           // Read the next offset of the buffer
@@ -276,12 +286,12 @@ class DebuggerPacketReceiver(
         //
         // Data outputs are now valid
         //
-        regDataValidOutput := true.B
+        dataValidOutput := true.B
 
         //
         // Adjust the read buffer data
         //
-        regReceivingData := io.rdData
+        receivingData := io.rdData
 
         //
         // Return to the previous state of action
@@ -292,12 +302,17 @@ class DebuggerPacketReceiver(
       is(sDone) {
 
         //
+        // Reset the temporary address holder
+        //
+        regRdWrAddr := 0.U
+
+        //
         // The receiving is done at this stage, either
         // was successful of unsucessful, we'll release the
         // sharing bram resource by indicating that the receiving
         // module is no longer using the bram line
         //
-        regFinishedReceivingBuffer := true.B
+        finishedReceivingBuffer := true.B
 
         //
         // Go to the idle state
@@ -310,14 +325,14 @@ class DebuggerPacketReceiver(
   // ---------------------------------------------------------------------
 
   //
-  // Connect output pins to internal registers
+  // Connect output pins
   //
-  io.rdWrAddr := regRdWrAddr
-  io.requestedActionOfThePacketOutput := regRequestedActionOfThePacketOutput
-  io.requestedActionOfThePacketOutputValid := regRequestedActionOfThePacketOutputValid
-  io.dataValidOutput := regDataValidOutput
-  io.receivingData := regReceivingData
-  io.finishedReceivingBuffer := regFinishedReceivingBuffer
+  io.rdWrAddr := rdWrAddr
+  io.requestedActionOfThePacketOutput := requestedActionOfThePacketOutput
+  io.requestedActionOfThePacketOutputValid := requestedActionOfThePacketOutputValid
+  io.dataValidOutput := dataValidOutput
+  io.receivingData := receivingData
+  io.finishedReceivingBuffer := finishedReceivingBuffer
 
 }
 
@@ -385,4 +400,28 @@ object DebuggerPacketReceiver {
       finishedReceivingBuffer
     )
   }
+}
+
+object ReceiverModule extends App {
+
+  //
+  // Generate hwdbg verilog files
+  //
+  println(
+    ChiselStage.emitSystemVerilog(
+      new DebuggerPacketReceiver(
+        DebuggerConfigurations.ENABLE_DEBUG,
+        DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+      ),
+      firtoolOpts = Array(
+        "-disable-all-randomization",
+        "--lowering-options=disallowLocalVariables", // because icarus doesn't support 'automatic logic', this option prevents such logics
+        "-strip-debug-info",
+        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
+        "-o",
+        "generated/"
+      )
+    )
+  )
 }
