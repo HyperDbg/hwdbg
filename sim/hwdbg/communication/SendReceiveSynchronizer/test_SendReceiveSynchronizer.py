@@ -120,6 +120,13 @@ async def SendReceiveSynchronizer_test(dut):
         dut.io_plInSignal.value = 0
 
         #
+        # Activate sending logic to test whether the chip fails synchronizing signals or not
+        # 
+        dut.io_beginSendingBuffer.value = 1
+        await RisingEdge(dut.clock)
+        dut.io_beginSendingBuffer.value = 0
+
+        #
         # Wait until the receive operation is done (finished)
         #
         for i in range(30):
@@ -233,16 +240,22 @@ async def SendReceiveSynchronizer_test(dut):
                     else:
                         dut.io_readNextData.value = 0
 
-
             #
             # Go to the next clock cycle
             #
             await RisingEdge(dut.clock)
 
+
         if test_number % 3 != 0:
             dut.io_noNewDataReceiver.value = 1
             await RisingEdge(dut.clock)
             dut.io_noNewDataReceiver.value = 0
+
+        #
+        # Run extra waiting clocks
+        #
+        for _ in range(10):
+            await RisingEdge(dut.clock)
 
         ###############################################################
         #                                                             #
@@ -253,9 +266,10 @@ async def SendReceiveSynchronizer_test(dut):
         dut._log.info("Enable sending data on the chip (" + str(test_number) + ")")
 
         #
-        # Still there is data to send
+        # There is data to send
         #
         dut.io_noNewDataSender.value = 0
+        dut.io_beginSendingBuffer.value = 0
 
         #
         # Tell the sender to start sending data (This mainly operates based on
@@ -264,6 +278,13 @@ async def SendReceiveSynchronizer_test(dut):
         dut.io_beginSendingBuffer.value = 1
         await RisingEdge(dut.clock)
         dut.io_beginSendingBuffer.value = 0
+
+        #
+        # Activate receiving logic to test whether the chip fails synchronizing signals or not
+        # 
+        dut.io_plInSignal.value = 1
+        await RisingEdge(dut.clock)
+        dut.io_plInSignal.value = 0
 
         #
         # No new data at this stage

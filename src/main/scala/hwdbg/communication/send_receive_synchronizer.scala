@@ -188,7 +188,7 @@ class SendReceiveSynchronizer(
           //
           // Go to the sender state
           //
-          state := sReceiver
+          state := sSender
 
         }.otherwise {
 
