@@ -157,6 +157,7 @@ class DebuggerPacketReceiver(
         // Goes to the next section
         //
         state := sReadIndicator
+
       }
       is(sReadIndicator) {
 
@@ -169,6 +170,7 @@ class DebuggerPacketReceiver(
         // Goes to the next section
         //
         state := sReadTypeOfThePacket
+
       }
       is(sReadTypeOfThePacket) {
 
@@ -260,10 +262,24 @@ class DebuggerPacketReceiver(
       is(sWaitToReadActionBuffer) {
 
         //
+        // The value of the received buffer is valid here, however,
+        // in order to make difference when a new value is read, the
+        // following signals goes to the off state
+        //
+        regDataValidOutput := false.B
+
+        //
         // Check if the caller needs to read the next part of
         // the block RAM or the receiving data should be finished
         //
-        when(risingEdgeReadNextData === true.B) {
+        when(io.noNewDataReceiver === true.B) {
+
+          //
+          // No new data, the receiving is done
+          //
+          state := sDone
+
+        }.elsewhen(risingEdgeReadNextData === true.B) {
 
           //
           // Adjust address to read next data to BRAM
@@ -275,13 +291,6 @@ class DebuggerPacketReceiver(
           // Read the next offset of the buffer
           //
           state := sReadActionBuffer
-
-        }.elsewhen(io.noNewDataReceiver === true.B && io.readNextData === false.B) {
-
-          //
-          // No new data, the receiving is done
-          //
-          state := sDone
 
         }.otherwise {
 
@@ -304,10 +313,21 @@ class DebuggerPacketReceiver(
         //
         regReceivingData := io.rdData
 
-        //
-        // Return to the previous state of action
-        //
-        state := sWaitToReadActionBuffer
+        when(io.noNewDataReceiver === true.B) {
+
+          //
+          // No new data, the receiving is done
+          //
+          state := sDone
+
+        }.otherwise {
+
+          //
+          // Return to the previous state of action
+          //
+          state := sWaitToReadActionBuffer
+
+        }
 
       }
       is(sDone) {
