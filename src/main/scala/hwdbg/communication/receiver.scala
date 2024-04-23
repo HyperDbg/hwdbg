@@ -440,27 +440,3 @@ object DebuggerPacketReceiver {
     )
   }
 }
-
-object ReceiverModule extends App {
-
-  //
-  // Generate hwdbg verilog files
-  //
-  println(
-    ChiselStage.emitSystemVerilog(
-      new DebuggerPacketReceiver(
-        DebuggerConfigurations.ENABLE_DEBUG,
-        DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
-        DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
-      ),
-      firtoolOpts = Array(
-        "-disable-all-randomization",
-        "--lowering-options=disallowLocalVariables", // because icarus doesn't support 'automatic logic', this option prevents such logics
-        "-strip-debug-info",
-        "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
-        "-o",
-        "generated/"
-      )
-    )
-  )
-}
