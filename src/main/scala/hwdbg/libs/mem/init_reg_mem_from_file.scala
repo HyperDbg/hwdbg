@@ -30,6 +30,7 @@ object InitRegMemFromFileTools {
       width: Int
   ): Seq[UInt] = {
 
+    var counter: Int = 0
     val buffer = new ArrayBuffer[UInt]
     for (line <- Source.fromFile(path).getLines()) {
       val tokens: Array[String] = line.split("(//)").map(_.trim)
@@ -38,9 +39,10 @@ object InitRegMemFromFileTools {
         val i = Integer.parseInt(tokens.head, 16)
 
         LogInfo(debug)(
-          f"Initialize memory with 0x${i}%x"
+          f"Initialize memory [${counter}%x]: 0x${i}%x"
         )
 
+        counter = counter + 4
         buffer.append(i.U(width.W))
       }
     }
