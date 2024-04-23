@@ -26,8 +26,8 @@ import hwdbg.constants._
 
 object DebuggerPacketReceiverEnums {
   object State extends ChiselEnum {
-    val sIdle, sReadChecksum, sReadIndicator, sReadTypeOfThePacket, sReadRequestedActionOfThePacket, sRequestedActionIsValid, sReadActionBuffer,
-        sDone = Value
+    val sIdle, sReadChecksum, sReadIndicator, sReadTypeOfThePacket, sReadRequestedActionOfThePacket, sRequestedActionIsValid, sWaitToReadActionBuffer,
+        sReadActionBuffer, sDone = Value
   }
 }
 
@@ -91,10 +91,10 @@ class DebuggerPacketReceiver(
   val rdWrAddr = WireInit(0.U(bramAddrWidth.W))
   val regRdWrAddr = RegInit(0.U(bramAddrWidth.W))
   val finishedReceivingBuffer = WireInit(false.B)
-  val requestedActionOfThePacketOutput = WireInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
-  val requestedActionOfThePacketOutputValid = WireInit(false.B)
-  val dataValidOutput = WireInit(false.B)
-  val receivingData = WireInit(0.U(bramDataWidth.W))
+  val regRequestedActionOfThePacketOutput = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+  val regRequestedActionOfThePacketOutputValid = RegInit(false.B)
+  val regDataValidOutput = RegInit(false.B)
+  val regReceivingData = RegInit(0.U(bramDataWidth.W))
 
   //
   // Rising-edge detector for start receiving signal
@@ -139,10 +139,10 @@ class DebuggerPacketReceiver(
         // Configure the output pins in case of sIdle
         //
         rdWrAddr := 0.U
-        requestedActionOfThePacketOutput := 0.U
-        requestedActionOfThePacketOutputValid := false.B
-        dataValidOutput := false.B
-        receivingData := 0.U
+        regRequestedActionOfThePacketOutput := 0.U
+        regRequestedActionOfThePacketOutputValid := false.B
+        regDataValidOutput := false.B
+        regReceivingData := 0.U
         finishedReceivingBuffer := false.B
 
       }
@@ -217,6 +217,9 @@ class DebuggerPacketReceiver(
         // Check whether the type of the packet is valid or not
         //
         val packetType: DebuggerRemotePacketType.Value = DebuggerRemotePacketType.DEBUGGER_TO_DEBUGGEE_HARDWARE_LEVEL
+        LogInfo(debug)(
+          f"Check packet type with DEBUGGER_TO_DEBUGGEE_HARDWARE_LEVEL (0x${packetType.id}%x)"
+        )
         when(io.rdData === packetType.id.U) {
 
           //
@@ -241,12 +244,20 @@ class DebuggerPacketReceiver(
         //
         // Read the RequestedActionOfThePacket
         //
-        requestedActionOfThePacketOutput := io.rdData
+        regRequestedActionOfThePacketOutput := io.rdData
 
         //
         // The RequestedActionOfThePacketOutput is valid from now
         //
-        requestedActionOfThePacketOutputValid := true.B
+        regRequestedActionOfThePacketOutputValid := true.B
+
+        //
+        // Goes to the next section
+        //
+        state := sWaitToReadActionBuffer
+
+      }
+      is(sWaitToReadActionBuffer) {
 
         //
         // Check if the caller needs to read the next part of
@@ -277,7 +288,7 @@ class DebuggerPacketReceiver(
           //
           // Stay at the same state
           //
-          state := sRequestedActionIsValid
+          state := sWaitToReadActionBuffer
         }
 
       }
@@ -286,17 +297,17 @@ class DebuggerPacketReceiver(
         //
         // Data outputs are now valid
         //
-        dataValidOutput := true.B
+        regDataValidOutput := true.B
 
         //
         // Adjust the read buffer data
         //
-        receivingData := io.rdData
+        regReceivingData := io.rdData
 
         //
         // Return to the previous state of action
         //
-        state := sRequestedActionIsValid
+        state := sWaitToReadActionBuffer
 
       }
       is(sDone) {
@@ -305,6 +316,14 @@ class DebuggerPacketReceiver(
         // Reset the temporary address holder
         //
         regRdWrAddr := 0.U
+
+        //
+        // Requested action buffer and the receiving buffer is no longer valid
+        //
+        regRequestedActionOfThePacketOutput := 0.U
+        regRequestedActionOfThePacketOutputValid := false.B
+        regReceivingData := 0.U
+        regDataValidOutput := false.B
 
         //
         // The receiving is done at this stage, either
@@ -328,10 +347,10 @@ class DebuggerPacketReceiver(
   // Connect output pins
   //
   io.rdWrAddr := rdWrAddr
-  io.requestedActionOfThePacketOutput := requestedActionOfThePacketOutput
-  io.requestedActionOfThePacketOutputValid := requestedActionOfThePacketOutputValid
-  io.dataValidOutput := dataValidOutput
-  io.receivingData := receivingData
+  io.requestedActionOfThePacketOutput := regRequestedActionOfThePacketOutput
+  io.requestedActionOfThePacketOutputValid := regRequestedActionOfThePacketOutputValid
+  io.dataValidOutput := regDataValidOutput
+  io.receivingData := regReceivingData
   io.finishedReceivingBuffer := finishedReceivingBuffer
 
 }

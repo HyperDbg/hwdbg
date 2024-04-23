@@ -45,10 +45,10 @@ async def DebuggerPacketReceiver_test(dut):
     # Assert initial output is unknown
     #
     assert LogicArray(dut.io_rdWrAddr.value) == LogicArray("XXXXXXXXXXXXX")
-    assert LogicArray(dut.io_requestedActionOfThePacketOutput.value) == LogicArray("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+    assert LogicArray(dut.io_requestedActionOfThePacketOutput.value) == LogicArray("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     assert LogicArray(dut.io_requestedActionOfThePacketOutputValid.value) == LogicArray("X")
     assert LogicArray(dut.io_dataValidOutput.value) == LogicArray("X")
-    assert LogicArray(dut.io_receivingData.value) == LogicArray("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+    assert LogicArray(dut.io_receivingData.value) == LogicArray("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     assert LogicArray(dut.io_finishedReceivingBuffer.value) == LogicArray("X")
 
     clock = Clock(dut.clock, 10, units="ns")  # Create a 10ns period clock on port clock
@@ -64,6 +64,8 @@ async def DebuggerPacketReceiver_test(dut):
     # Initial values
     #
     dut.io_en.value = 0
+    dut.io_readNextData.value = 0
+    dut.io_noNewDataReceiver.value = 0
     dut.io_plInSignal.value = 0
 
     #
@@ -96,7 +98,7 @@ async def DebuggerPacketReceiver_test(dut):
         #
         # Wait until the data is received
         #
-        for _ in range(1000):
+        for _ in range(20):
             if (dut.io_dataValidOutput.value == 1):
                 break
             else:
@@ -106,13 +108,19 @@ async def DebuggerPacketReceiver_test(dut):
                     case 0x8: # indicator
                         dut.io_rdData.value = 0x48595045 # first 32 bits of the indicator
                     case 0x10: # type
-                        dut.io_rdData.value = 0x10101010
+                        dut.io_rdData.value = 0x4 # debugger to hardware packet (DEBUGGER_TO_DEBUGGEE_HARDWARE_LEVEL)
                     case 0x14: # requested action
                         dut.io_rdData.value = 0x14141414
                     case _:
                         assert "invalid address in the address line"
             await RisingEdge(dut.clock)
 
+        
+        #
+        # No new data needed to be received
+        #
+        dut.io_noNewDataReceiver.value = 1
+        
         #
         # Run extra waiting clocks
         #
