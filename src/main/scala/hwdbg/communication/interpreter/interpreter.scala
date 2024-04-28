@@ -26,7 +26,7 @@ import hwdbg.constants._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
-    val sIdle, sDone = Value
+    val sIdle, sNewActionReceived, sDone = Value
   }
 }
 
@@ -102,9 +102,23 @@ class DebuggerPacketInterpreter(
       is(sIdle) {
 
         //
-        // Go to the idle state
+        // Check if the debugger need a new action (a new command is received)
+        //
+        when(io.requestedActionOfThePacketInputValid) {
+          state := sNewActionReceived
+        }
+
+        //
+        // Remain at the same state
         //
         state := sDone
+      }
+      is(sNewActionReceived) {
+
+        //
+        // Now, the action needs to be dispatched
+        //
+
       }
       is(sDone) {
 

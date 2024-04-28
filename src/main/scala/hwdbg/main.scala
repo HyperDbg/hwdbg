@@ -87,7 +87,7 @@ class DebuggerMain(
   val receivingData = Wire(UInt(bramDataWidth.W))
   val sendWaitForBuffer = Wire(Bool())
 
-  //
+  // -----------------------------------------------------------------------
   // Create instance from interpreter
   //
   val (
@@ -112,7 +112,7 @@ class DebuggerMain(
       sendWaitForBuffer
     )
 
-  //
+  // -----------------------------------------------------------------------
   // Create instance from synchronizer
   //
   val (
@@ -143,7 +143,7 @@ class DebuggerMain(
       sendingData
     )
 
-  //
+  // -----------------------------------------------------------------------
   // Connect synchronizer signals to wires
   //
   requestedActionOfThePacketOutput := outRequestedActionOfThePacketOutput
@@ -152,9 +152,7 @@ class DebuggerMain(
   receivingData := outReceivingData
   sendWaitForBuffer := outSendWaitForBuffer
 
-  // ---------------------------------------------------------------------
-
-  //
+  // -----------------------------------------------------------------------
   // Configure the output signals
   //
   for (i <- 0 until numberOfOutputPins) {

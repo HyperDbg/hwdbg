@@ -64,3 +64,13 @@ class DebuggerRemotePacket() extends Bundle {
 }
 
 // -----------------------------------------------------------------------
+
+/**
+ * @brief
+ *   Different action of hwdbg (SHARED WITH HYPERDBG)
+ */
+object HwdbgAction {
+  object State extends ChiselEnum {
+    val hwdbgActionSendVersion, hwdbgActionSendPinInformation = Value
+  }
+}
