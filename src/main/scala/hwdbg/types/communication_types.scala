@@ -67,10 +67,13 @@ class DebuggerRemotePacket() extends Bundle {
 
 /**
  * @brief
- *   Different action of hwdbg (SHARED WITH HYPERDBG)
+ *   Different action of hwdbg (SHARED WITH HYPERDBG) (HWDBG_ACTION_ENUMS)
+ * @warning
+ *   Used in HyperDbg
  */
-object HwdbgAction {
-  object State extends ChiselEnum {
-    val hwdbgActionSendVersion, hwdbgActionSendPinInformation = Value
-  }
+object HwdbgActionEnums extends Enumeration {
+
+  val hwdbgActionSendVersion = Value(0)
+  val hwdbgActionSendPinInformation = Value(1)
+
 }

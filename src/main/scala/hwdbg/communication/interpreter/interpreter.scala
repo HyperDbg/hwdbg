@@ -21,8 +21,6 @@ import circt.stage.ChiselStage
 
 import hwdbg.configs._
 import hwdbg.types._
-import hwdbg.utils._
-import hwdbg.constants._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
@@ -115,12 +113,43 @@ class DebuggerPacketInterpreter(
       }
       is(sNewActionReceived) {
 
-        //
+        // -------------------------------------------------------------------------
         // Now, the action needs to be dispatched
+        //
+        val inputAction = io.requestedActionOfThePacketInput
+
+        when(inputAction === HwdbgActionEnums.hwdbgActionSendVersion.id.U) {
+
+          //
+          // Send version
+          //
+
+        }.elsewhen(inputAction === HwdbgActionEnums.hwdbgActionSendPinInformation.id.U) {
+
+          //
+          // Send pin information
+          //
+
+        }.otherwise {
+
+          //
+          // Invalid action, going to the sDone state
+          //
+          state := sDone
+        }
+
+        //
+        // -------------------------------------------------------------------------
         //
 
       }
       is(sDone) {
+
+        //
+        // Finish the receiving, sending communication
+        //
+        noNewDataReceiver := true.B
+        noNewDataSender := true.B
 
         //
         // Go to the idle state
