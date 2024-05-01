@@ -56,6 +56,7 @@ object InitRegMemFromFileTools {
 
 class InitRegMemFromFile(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+    emulateBlockRamDelay: Boolean = MemoryCommunicationConfigurations.ENABLE_BLOCK_RAM_DELAY,
     memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
     addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
@@ -72,18 +73,30 @@ class InitRegMemFromFile(
 
   val mem = RegInit(VecInit(InitRegMemFromFileTools.readmemh(debug, memoryFile, width)))
 
+  val actualAddr = Wire(UInt(addrWidth.W))
+  val actualData = Wire(UInt(width.W))
+
   //
   // This because the address of the saved registers are using 4 bytes granularities
   // E.g., 4 Rsh 2 = 1 | 8 Rsh 2 = 2 | 12 Rsh 2 = 3
   //
-  val actualAddr = io.addr >> 2
+  if (emulateBlockRamDelay) {
+    //
+    // In case, if it is an emulation of BRAM, a one clock delay is injected
+    //
+    actualAddr := RegNext(io.addr >> 2)
+    actualData := RegNext(io.dataIn)
+  } else {
+    actualAddr := io.addr >> 2
+    actualData := io.dataIn
+  }
 
   when(io.enable) {
     val rdwrPort = mem(actualAddr)
     io.dataOut := rdwrPort
 
     when(io.write) {
-      mem(actualAddr) := io.dataIn
+      mem(actualAddr) := actualData
     }
   }.otherwise {
     io.dataOut := 0.U
@@ -94,6 +107,7 @@ object InitRegMemFromFile {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+      emulateBlockRamDelay: Boolean = MemoryCommunicationConfigurations.ENABLE_BLOCK_RAM_DELAY,
       memoryFile: String = TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       addrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       width: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
@@ -108,6 +122,7 @@ object InitRegMemFromFile {
     val initRegMemFromFileModule = Module(
       new InitRegMemFromFile(
         debug,
+        emulateBlockRamDelay,
         memoryFile,
         addrWidth,
         width,

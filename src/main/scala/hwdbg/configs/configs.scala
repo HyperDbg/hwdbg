@@ -85,6 +85,11 @@ object DebuggerConfigurations {
 object MemoryCommunicationConfigurations {
 
   //
+  // Emulate block RAM by inferring a register to delay one clock cycle
+  //
+  val ENABLE_BLOCK_RAM_DELAY: Boolean = true
+
+  //
   // Default number of bytes used in initialized SRAM memory
   //
   val DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE: Int = 8192 // 8 KB

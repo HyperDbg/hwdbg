@@ -69,6 +69,7 @@ class DebuggerModuleTestingBRAM(
   val dataOut =
     InitRegMemFromFile(
       debug,
+      MemoryCommunicationConfigurations.ENABLE_BLOCK_RAM_DELAY,
       TestingConfigurations.BRAM_INITIALIZATION_FILE_PATH,
       bramAddrWidth,
       bramDataWidth,
