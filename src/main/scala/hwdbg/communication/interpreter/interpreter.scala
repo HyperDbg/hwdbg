@@ -111,13 +111,20 @@ class DebuggerPacketInterpreter(
         // Check if the debugger need a new action (a new command is received)
         //
         when(io.requestedActionOfThePacketInputValid) {
+
+          //
+          // An action is received
+          //
           state := sNewActionReceived
+
+        }.otherwise {
+
+          //
+          // Remain at the same state (no action)
+          //
+          state := sDone
         }
 
-        //
-        // Remain at the same state
-        //
-        state := sDone
       }
       is(sNewActionReceived) {
 

@@ -135,6 +135,7 @@ object MainWithInitializedBRAM extends App {
       ),
       firtoolOpts = Array(
         "-disable-all-randomization",
+        "-strip-debug-info",
         "--lowering-options=disallowLocalVariables", // because icarus doesn't support 'automatic logic', this option prevents such logics
         "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
         "-o",

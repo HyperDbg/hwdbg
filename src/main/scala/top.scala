@@ -104,7 +104,7 @@ object Main extends App {
       ),
       firtoolOpts = Array(
         "-disable-all-randomization",
-        "-strip-debug-info",
+        // "-strip-debug-info",
         "--split-verilog", // The intention for this argument (and next argument) is to separate generated files.
         "-o",
         "generated/"
