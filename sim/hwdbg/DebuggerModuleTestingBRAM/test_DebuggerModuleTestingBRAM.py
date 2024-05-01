@@ -155,6 +155,8 @@ async def DebuggerModuleTestingBRAM_test(dut):
 
     # Tell the hwdbg to receive BRAM results
     dut.io_plInSignal.value = 1
+    await RisingEdge(dut.clock)
+    dut.io_plInSignal.value = 0
 
     # Set initial input value to prevent it from floating
     dut.io_inputPin_0.value = 1
@@ -193,13 +195,18 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # Synchronize with the clock. This will regisiter the initial `inputPinX` value
     await RisingEdge(dut.clock)
     
-    expected_val = 0  # Matches initial input value
-    for i in range(10):
-        val = random.randint(0, 1)
-        dut.io_inputPin_0.value = val  # Assign the random value val to the input port d
+    #
+    # expected_val = 0  # Matches initial input value
+    # for i in range(10):
+    #     val = random.randint(0, 1)
+    #     dut.io_inputPin_0.value = val  # Assign the random value val to the input port d
+    #     await RisingEdge(dut.clock)
+    #     #assert dut.io_inputPin_0.value == expected_val, f"output q was incorrect on the {i}th cycle"
+    #     expected_val = val # Save random value for next RisingEdge
+
+    # Run the debugger for some times
+    for _ in range(100):
         await RisingEdge(dut.clock)
-        #assert dut.io_inputPin_0.value == expected_val, f"output q was incorrect on the {i}th cycle"
-        expected_val = val # Save random value for next RisingEdge
 
     # Check the final input on the next clock
     await RisingEdge(dut.clock)

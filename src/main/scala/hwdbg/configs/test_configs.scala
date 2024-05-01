@@ -24,6 +24,6 @@ import chisel3.util._
  */
 object TestingConfigurations {
 
-  val BRAM_INITIALIZATION_FILE_PATH: String = "./src/resources/8kb_BRAM.hex.txt"
+  val BRAM_INITIALIZATION_FILE_PATH: String = "./src/test/bram/send_version.hex.txt"
 
 }

@@ -122,7 +122,7 @@ class DebuggerPacketInterpreter(
           //
           // Remain at the same state (no action)
           //
-          state := sDone
+          state := sIdle
         }
 
       }

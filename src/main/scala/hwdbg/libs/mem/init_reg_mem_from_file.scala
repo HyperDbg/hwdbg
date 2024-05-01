@@ -33,10 +33,12 @@ object InitRegMemFromFileTools {
     var counter: Int = 0
     val buffer = new ArrayBuffer[UInt]
     for (line <- Source.fromFile(path).getLines()) {
+
       val tokens: Array[String] = line.split("(//)").map(_.trim)
+
       if (tokens.nonEmpty && tokens.head != "") {
 
-        val i = Integer.parseInt(tokens.head, 16)
+        val i = Integer.parseInt(tokens.head.split(";")(0).trim, 16)
 
         LogInfo(debug)(
           f"Initialize memory [${counter}%x]: 0x${i}%x"
