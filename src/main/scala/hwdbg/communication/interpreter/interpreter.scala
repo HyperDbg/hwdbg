@@ -87,8 +87,9 @@ class DebuggerPacketInterpreter(
   val beginSendingBuffer = WireInit(false.B)
   val noNewDataSender = WireInit(false.B)
   val dataValidOutput = WireInit(false.B)
-  val requestedActionOfThePacketOutput = WireInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
   val sendingData = WireInit(0.U(bramDataWidth.W))
+
+  val regRequestedActionOfThePacketOutput = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
 
   //
   // Apply the chip enable signal
@@ -121,8 +122,46 @@ class DebuggerPacketInterpreter(
         when(inputAction === HwdbgActionEnums.hwdbgActionSendVersion.id.U) {
 
           //
-          // Send version
+          // *** Send version ***
           //
+
+          //
+          // Set the packet type
+          //
+          regRequestedActionOfThePacketOutput := 9999.U
+
+          //
+          // Start sending the buffer
+          //
+          beginSendingBuffer := true.B
+
+          //
+          // Wait until
+          //
+          when(io.sendWaitForBuffer === true.B) {
+
+            //
+            // The sender is ready to send next buffer
+            //
+            sendingData := 1.U
+
+            //
+            // Data is valid to send
+            //
+            dataValidOutput := true.B
+
+            //
+            // Sending is finished at the next cycle
+            //
+            state := sDone
+
+          }.otherwise {
+
+            //
+            // Stay at the same state
+            //
+            state := sNewActionReceived
+          }
 
         }.elsewhen(inputAction === HwdbgActionEnums.hwdbgActionSendPinInformation.id.U) {
 
@@ -170,7 +209,7 @@ class DebuggerPacketInterpreter(
   io.beginSendingBuffer := beginSendingBuffer
   io.noNewDataSender := noNewDataSender
   io.dataValidOutput := dataValidOutput
-  io.requestedActionOfThePacketOutput := requestedActionOfThePacketOutput
+  io.requestedActionOfThePacketOutput := regRequestedActionOfThePacketOutput
   io.sendingData := sendingData
 
 }
