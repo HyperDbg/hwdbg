@@ -21,6 +21,8 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.types import LogicArray
 
+maximum_number_of_clock_cycles = 1000
+
 '''
   input  clock,
          reset,
@@ -232,11 +234,6 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # Enable chip
     dut.io_en.value = 1
 
-    # Tell the hwdbg to receive BRAM results
-    dut.io_plInSignal.value = 1
-    await RisingEdge(dut.clock)
-    dut.io_plInSignal.value = 0
-
     # Set initial input value to prevent it from floating
     dut.io_inputPin_0.value = 1
     dut.io_inputPin_1.value = 0
@@ -271,24 +268,54 @@ async def DebuggerModuleTestingBRAM_test(dut):
     dut.io_inputPin_30.value = 1
     dut.io_inputPin_31.value = 1
 
-    # Synchronize with the clock. This will regisiter the initial `inputPinX` value
+    # Tell the hwdbg to receive BRAM results
+    dut.io_plInSignal.value = 1
     await RisingEdge(dut.clock)
-    
-    #
-    # expected_val = 0  # Matches initial input value
-    # for i in range(10):
-    #     val = random.randint(0, 1)
-    #     dut.io_inputPin_0.value = val  # Assign the random value val to the input port d
-    #     await RisingEdge(dut.clock)
-    #     #assert dut.io_inputPin_0.value == expected_val, f"output q was incorrect on the {i}th cycle"
-    #     expected_val = val # Save random value for next RisingEdge
+    dut.io_plInSignal.value = 0
 
-    # Run the debugger for some times
-    for _ in range(100):
+    #
+    # Synchronize with the clock. This will regisiter the initial `inputPinX` value
+    #
+    await RisingEdge(dut.clock)
+
+    #
+    # Wait until the debuggee sends an interrupt to debugger
+    #
+    clock_counter = 0
+    interrupt_not_delivered = False
+
+    while dut.io_psOutInterrupt != 1:
+
+        if clock_counter % 10 == 0:
+            print("Number of clock cycles spent in debuggee (PL): " + str(clock_counter))
+        
+        clock_counter = clock_counter + 1
         await RisingEdge(dut.clock)
 
+        #
+        # Apply a limitation to the number of clock cycles that
+        # can be executed to avoid infinite time
+        #
+        if (clock_counter >= maximum_number_of_clock_cycles):
+            interrupt_not_delivered = True
+            break
+
+    #
+    # Being here means either the debuggee sent an interrupt to the PS
+    # or the maximum clock cycles reached
+    #
+    if interrupt_not_delivered:
+        print("Maximum clock cycles reached")
+    else:    
+        print("Debuggee (PL) interrupted Debugger (PS)")
+
+    #
+    # Print contents of BRAM
+    #
+    print_bram_content(dut)
+
+    #
     # Check the final input on the next clock
+    #
     await RisingEdge(dut.clock)
 
-    # Print contents of BRAM
-    print_bram_content(dut)
