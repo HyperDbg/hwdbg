@@ -93,6 +93,77 @@ from cocotb.types import LogicArray
   output io_psOutInterrupt
 '''
 
+#
+# Define a function to extract the numeric part of the string
+#
+def extract_number(s):
+    return int(s.split('_')[1])
+
+def print_bram_content(dut):
+    """printing contents of Block RAM"""
+
+    #
+    # Print the instances and signals (which includes the ports) of the design's toplevel
+    #
+    print("===================================================================")
+    # print("Onstances and signals (which includes the ports) of the design's toplevel:")
+    # print(dir(dut))
+    # print("===================================================================")
+
+    #
+    # Print the instances and signals of "inst_sub_block" under the toplevel
+    # which is the instance name of a Verilog module or VHDL entity/component
+    #
+    # print("Onstances and signals of 'dataOut_initRegMemFromFileModule' under the toplevel:")
+    # print(dir(dut.dataOut_initRegMemFromFileModule))
+
+    items_inside_bram_emulator = dir(dut.dataOut_initRegMemFromFileModule)
+    mem_items = []
+
+    for item in items_inside_bram_emulator:
+        if item.startswith("mem_"):
+            mem_items.append(item)
+
+    #
+    # Sort the list using the custom key function
+    #
+    sorted_list = sorted(mem_items, key=extract_number)
+
+    #
+    # Print the sorted list
+    #
+    print("Content of BRAM after emulation:")
+    for item in sorted_list:
+        element = getattr(dut.dataOut_initRegMemFromFileModule, item)
+
+        #
+        # Print the target register in binary format
+        #
+        # print(str(element))
+
+        #
+        # Convert binary to int
+        #
+        int_content = int(str(element.value), 2)
+
+        #
+        # Convert integer to hexadecimal string with at least 8 characters
+        #
+        hex_string = f'{int_content:08x}'
+
+        #
+        # Print contents of BRAM
+        #
+        if len(item) == 5:
+            print(item + ":   " + hex_string)
+        elif len(item) == 6:
+            print(item + ":  " + hex_string)
+        else:
+            print(item + ": " + hex_string)
+
+    print("===================================================================")
+
+
 @cocotb.test()
 async def DebuggerModuleTestingBRAM_test(dut):
     """Test hwdbg module (with pre-defined BRAM)"""
@@ -210,3 +281,6 @@ async def DebuggerModuleTestingBRAM_test(dut):
 
     # Check the final input on the next clock
     await RisingEdge(dut.clock)
+
+    # Print contents of BRAM
+    print_bram_content(dut)
