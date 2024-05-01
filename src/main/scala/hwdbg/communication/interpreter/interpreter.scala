@@ -19,6 +19,7 @@ import chisel3._
 import chisel3.util.{switch, is}
 import circt.stage.ChiselStage
 
+import hwdbg.version._
 import hwdbg.configs._
 import hwdbg.types._
 
@@ -128,7 +129,7 @@ class DebuggerPacketInterpreter(
           //
           // Set the packet type
           //
-          regRequestedActionOfThePacketOutput := 9999.U
+          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponseVersion.id.U
 
           //
           // Start sending the buffer
@@ -143,7 +144,11 @@ class DebuggerPacketInterpreter(
             //
             // The sender is ready to send next buffer
             //
-            sendingData := 1.U
+
+            //
+            // Set the version
+            //
+            sendingData := Version.getEncodedVersion.U
 
             //
             // Data is valid to send
@@ -166,8 +171,13 @@ class DebuggerPacketInterpreter(
         }.elsewhen(inputAction === HwdbgActionEnums.hwdbgActionSendPinInformation.id.U) {
 
           //
-          // Send pin information
+          // *** Send pin information ***
           //
+
+          //
+          // TODO: to be implemented
+          //
+          state := sDone
 
         }.otherwise {
 

@@ -77,3 +77,20 @@ object HwdbgActionEnums extends Enumeration {
   val hwdbgActionSendPinInformation = Value(1)
 
 }
+
+// -----------------------------------------------------------------------
+
+/**
+ * @brief
+ *   Different responses of hwdbg (SHARED WITH HYPERDBG) (HWDBG_RESPONSE_ENUMS)
+ * @warning
+ *   Used in HyperDbg
+ */
+object HwdbgResponseEnums extends Enumeration {
+
+  val hwdbgResponseVersion = Value(0)
+  val hwdbgResponsePinInformation = Value(1)
+
+}
+
+// -----------------------------------------------------------------------
