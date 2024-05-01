@@ -361,3 +361,6 @@ hs_err_pid*
 
 # Temporary disable the generated verilog files
 generated/
+
+# BRAM emulation content
+bram_content_after_emulation.txt

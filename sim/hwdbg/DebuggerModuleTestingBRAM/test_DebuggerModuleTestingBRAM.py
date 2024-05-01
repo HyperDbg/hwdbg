@@ -100,7 +100,7 @@ def extract_number(s):
     return int(s.split('_')[1])
 
 def print_bram_content(dut):
-    """printing contents of Block RAM"""
+    """Printing contents of Block RAM and saving them to a file"""
 
     #
     # Print the instances and signals (which includes the ports) of the design's toplevel
@@ -132,34 +132,42 @@ def print_bram_content(dut):
     #
     # Print the sorted list
     #
-    print("Content of BRAM after emulation:")
-    for item in sorted_list:
-        element = getattr(dut.dataOut_initRegMemFromFileModule, item)
+    
+    with open("bram_content_after_emulation.txt", "w") as file:
+        file.write("Content of BRAM after emulation:\n")
+        print("Content of BRAM after emulation:")
 
-        #
-        # Print the target register in binary format
-        #
-        # print(str(element))
+        for item in sorted_list:
+            element = getattr(dut.dataOut_initRegMemFromFileModule, item)
 
-        #
-        # Convert binary to int
-        #
-        int_content = int(str(element.value), 2)
+            #
+            # Print the target register in binary format
+            #
+            # print(str(element))
 
-        #
-        # Convert integer to hexadecimal string with at least 8 characters
-        #
-        hex_string = f'{int_content:08x}'
+            #
+            # Convert binary to int
+            #
+            int_content = int(str(element.value), 2)
 
-        #
-        # Print contents of BRAM
-        #
-        if len(item) == 5:
-            print(item + ":   " + hex_string)
-        elif len(item) == 6:
-            print(item + ":  " + hex_string)
-        else:
-            print(item + ": " + hex_string)
+            #
+            # Convert integer to hexadecimal string with at least 8 characters
+            #
+            hex_string = f'{int_content:08x}'
+
+            final_string = ""
+            if len(item) == 5:
+                final_string = item + ":   " + hex_string
+            elif len(item) == 6:
+                final_string = item + ":  " + hex_string
+            else:
+                final_string = item + ": " + hex_string
+
+            #
+            # Print contents of BRAM
+            #
+            file.write(final_string + "\n")
+            print(final_string)
 
     print("===================================================================")
 
