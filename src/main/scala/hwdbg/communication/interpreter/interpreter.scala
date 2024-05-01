@@ -25,7 +25,7 @@ import hwdbg.types._
 
 object DebuggerPacketInterpreterEnums {
   object State extends ChiselEnum {
-    val sIdle, sNewActionReceived, sDone = Value
+    val sIdle, sNewActionReceived, sSendResponse, sDone = Value
   }
 }
 
@@ -85,12 +85,18 @@ class DebuggerPacketInterpreter(
   val noNewDataReceiver = WireInit(false.B)
   val readNextData = WireInit(false.B)
 
-  val beginSendingBuffer = WireInit(false.B)
+  val regBeginSendingBuffer = RegInit(false.B)
   val noNewDataSender = WireInit(false.B)
   val dataValidOutput = WireInit(false.B)
   val sendingData = WireInit(0.U(bramDataWidth.W))
 
   val regRequestedActionOfThePacketOutput = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+
+  //////////////////// Test Signals (Should be remove) ////////////////////
+
+  val regRecvScriptSize = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
+
+  /////////////////////////////////////////////////////////////////////////
 
   //
   // Apply the chip enable signal
@@ -123,61 +129,69 @@ class DebuggerPacketInterpreter(
         when(inputAction === HwdbgActionEnums.hwdbgActionSendVersion.id.U) {
 
           //
-          // *** Send version ***
+          // *** Configure sending version ***
           //
 
           //
-          // Set the packet type
+          // Set the response packet type
           //
-          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponseVersion.id.U
-
-          //
-          // Start sending the buffer
-          //
-          beginSendingBuffer := true.B
+          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponsePinInformation.id.U
 
           //
-          // Wait until
+          // This action needs a response
           //
-          when(io.sendWaitForBuffer === true.B) {
-
-            //
-            // The sender is ready to send next buffer
-            //
-
-            //
-            // Set the version
-            //
-            sendingData := Version.getEncodedVersion.U
-
-            //
-            // Data is valid to send
-            //
-            dataValidOutput := true.B
-
-            //
-            // Sending is finished at the next cycle
-            //
-            state := sDone
-
-          }.otherwise {
-
-            //
-            // Stay at the same state
-            //
-            state := sNewActionReceived
-          }
+          state := sSendResponse
 
         }.elsewhen(inputAction === HwdbgActionEnums.hwdbgActionSendPinInformation.id.U) {
 
           //
-          // *** Send pin information ***
+          // *** Configure sending pin information ***
           //
 
           //
-          // TODO: to be implemented
+          // Set the response packet type
           //
-          state := sDone
+          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponsePinInformation.id.U
+
+          //
+          // This action needs a response
+          //
+          state := sSendResponse
+
+        }.elsewhen(inputAction === HwdbgActionEnums.hwdbgActionConfigureScriptBuffer.id.U) {
+
+          //
+          // *** Configure the internal buffer with script ***
+          //
+
+          //
+          // Set the response packet type
+          //
+          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponseScriptBufferConfigurationResult.id.U
+
+          //
+          // Get next buffer
+          //
+          readNextData := true.B
+
+          when(io.dataValidInput === false.B) {
+
+            //
+            // Still the configuration is not done, so receiving the data
+            // stay at the same state
+            //
+            state := sNewActionReceived
+
+          }.otherwise {
+
+            regRecvScriptSize := io.receivingData
+
+            //
+            // Configuration was done, send the response (result)
+            //
+            state := sSendResponse
+
+          }
 
         }.otherwise {
 
@@ -192,6 +206,100 @@ class DebuggerPacketInterpreter(
         //
 
       }
+      is(sSendResponse) {
+
+        //
+        // Finish the receiving
+        //
+        noNewDataReceiver := true.B
+
+        //
+        // Begin sending response
+        //
+        regBeginSendingBuffer := true.B
+
+        //
+        // Wait until the sender module is reading to send data
+        //
+        when(io.sendWaitForBuffer === true.B) {
+
+          // -------------------------------------------------------------------------
+          // Now, the response needs to be sent
+          //
+          when(regRequestedActionOfThePacketOutput === HwdbgResponseEnums.hwdbgResponseVersion.id.U) {
+
+            //
+            // *** Send version ***
+            //
+
+            //
+            // Set the version
+            //
+            sendingData := Version.getEncodedVersion.U
+
+            //
+            // Data is valid to send
+            //
+            dataValidOutput := true.B
+
+            //
+            // Only one buffer is enough to send, so we're done
+            //
+            state := sDone
+
+          }.elsewhen(regRequestedActionOfThePacketOutput === HwdbgResponseEnums.hwdbgResponsePinInformation.id.U) {
+
+            //
+            // *** Send pin information ***
+            //
+
+            //
+            // TODO: To be implemented
+            //
+            state := sDone
+
+          }.elsewhen(regRequestedActionOfThePacketOutput === HwdbgResponseEnums.hwdbgResponseScriptBufferConfigurationResult.id.U) {
+
+            //
+            // *** Send result of applying script ***
+            //
+
+            //
+            // Set the test data
+            //
+            sendingData := regRecvScriptSize
+
+            //
+            // Data is valid to send
+            //
+            dataValidOutput := true.B
+
+            //
+            // Only one buffer is enough to send for testing, so we're done
+            //
+            state := sDone
+
+          }.otherwise {
+
+            //
+            // Invalid response, going to the sDone state
+            //
+            state := sDone
+
+          }
+
+          //
+          // -------------------------------------------------------------------------
+          //
+        }.otherwise {
+
+          //
+          // The sender module is not ready for sending buffer
+          // so, we need to stay at this state
+          //
+          state := sSendResponse
+        }
+      }
       is(sDone) {
 
         //
@@ -199,6 +307,11 @@ class DebuggerPacketInterpreter(
         //
         noNewDataReceiver := true.B
         noNewDataSender := true.B
+
+        //
+        // No longer need to begin sending data
+        //
+        regBeginSendingBuffer := false.B
 
         //
         // Go to the idle state
@@ -216,7 +329,7 @@ class DebuggerPacketInterpreter(
   io.noNewDataReceiver := noNewDataReceiver
   io.readNextData := readNextData
 
-  io.beginSendingBuffer := beginSendingBuffer
+  io.beginSendingBuffer := regBeginSendingBuffer
   io.noNewDataSender := noNewDataSender
   io.dataValidOutput := dataValidOutput
   io.requestedActionOfThePacketOutput := regRequestedActionOfThePacketOutput
