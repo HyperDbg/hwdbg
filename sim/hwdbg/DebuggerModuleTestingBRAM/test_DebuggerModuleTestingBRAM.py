@@ -131,13 +131,33 @@ def print_bram_content(dut):
     #
     sorted_list = sorted(mem_items, key=extract_number)
 
-    #
-    # Print the sorted list
-    #
-    
     with open("bram_content_after_emulation.txt", "w") as file:
         file.write("Content of BRAM after emulation:\n")
         print("Content of BRAM after emulation:")
+
+        #
+        # The second half of the BRAM is used for PL to PS communication
+        #
+        address_of_ps_to_pl_communication = "mem_0"
+        address_of_ps_to_pl_communication_checksum1 = "mem_0"
+        address_of_ps_to_pl_communication_checksum2 = "mem_1"
+        address_of_ps_to_pl_communication_indicator1 = "mem_2"
+        address_of_ps_to_pl_communication_indicator2 = "mem_3"
+        address_of_ps_to_pl_communication_type_of_packet = "mem_4"
+        address_of_ps_to_pl_communication_requested_action_of_the_packet = "mem_5"
+        address_of_ps_to_pl_communication_start_of_data = "mem_6"
+        
+        len_of_sorted_list_div_by_2 = int(len(sorted_list) / 2)
+        address_of_pl_to_ps_communication = "mem_" + str(len_of_sorted_list_div_by_2)
+        address_of_pl_to_ps_communication_checksum1 = "mem_" + str(len_of_sorted_list_div_by_2 + 0)
+        address_of_pl_to_ps_communication_checksum2 = "mem_" + str(len_of_sorted_list_div_by_2 + 1)
+        address_of_pl_to_ps_communication_indicator1 = "mem_" + str(len_of_sorted_list_div_by_2 + 2)
+        address_of_pl_to_ps_communication_indicator2 = "mem_" + str(len_of_sorted_list_div_by_2 + 3)
+        address_of_pl_to_ps_communication_type_of_packet = "mem_" + str(len_of_sorted_list_div_by_2 + 4)
+        address_of_pl_to_ps_communication_requested_action_of_the_packet = "mem_" + str(len_of_sorted_list_div_by_2 + 5)
+        address_of_pl_to_ps_communication_start_of_data = "mem_" + str(len_of_sorted_list_div_by_2 + 6)
+
+        print("Address of PL to PS communication: " + address_of_pl_to_ps_communication)
 
         for item in sorted_list:
             element = getattr(dut.dataOut_initRegMemFromFileModule, item)
@@ -166,6 +186,36 @@ def print_bram_content(dut):
                 final_string = item + ": " + hex_string
 
             #
+            # Make a separation between PS and PL area
+            #
+            if item == address_of_ps_to_pl_communication:
+                file.write("\nPS to PL area:\n")
+                print("\nPS to PL area:")
+            elif item == address_of_pl_to_ps_communication:
+                file.write("\nPL to PS area:\n")
+                print("\nPL to PS area:")
+            
+            if item == address_of_ps_to_pl_communication_checksum1 or \
+            item == address_of_ps_to_pl_communication_checksum2 or \
+            item == address_of_pl_to_ps_communication_checksum1 or \
+            item == address_of_pl_to_ps_communication_checksum2:
+                final_string = final_string + "   | Checksum"
+            elif item == address_of_ps_to_pl_communication_indicator1 or \
+            item == address_of_ps_to_pl_communication_indicator2 or \
+            item == address_of_pl_to_ps_communication_indicator1 or \
+            item == address_of_pl_to_ps_communication_indicator2:
+                final_string = final_string + "   | Indicator"
+            elif item == address_of_ps_to_pl_communication_type_of_packet or \
+            item == address_of_pl_to_ps_communication_type_of_packet:
+                final_string = final_string + "   | TypeOfThePacket"
+            elif item == address_of_ps_to_pl_communication_requested_action_of_the_packet or \
+            item == address_of_pl_to_ps_communication_requested_action_of_the_packet:
+                final_string = final_string + "   | RequestedActionOfThePacket"
+            elif item == address_of_ps_to_pl_communication_start_of_data or \
+            item == address_of_pl_to_ps_communication_start_of_data:
+                final_string = final_string + "   | Start of Optional Data"
+
+            #
             # Print contents of BRAM
             #
             file.write(final_string + "\n")
@@ -178,7 +228,9 @@ def print_bram_content(dut):
 async def DebuggerModuleTestingBRAM_test(dut):
     """Test hwdbg module (with pre-defined BRAM)"""
 
+    #
     # Assert initial output is unknown
+    #
     assert LogicArray(dut.io_outputPin_0.value) == LogicArray("Z")
     assert LogicArray(dut.io_outputPin_1.value) == LogicArray("Z")
     assert LogicArray(dut.io_outputPin_2.value) == LogicArray("Z")
@@ -212,18 +264,27 @@ async def DebuggerModuleTestingBRAM_test(dut):
     assert LogicArray(dut.io_outputPin_30.value) == LogicArray("Z")
     assert LogicArray(dut.io_outputPin_31.value) == LogicArray("Z")
 
-    clock = Clock(dut.clock, 10, units="ns")  # Create a 10ns period clock on port clock
+    #
+    # Create a 10ns period clock on port clock
+    #
+    clock = Clock(dut.clock, 10, units="ns")
     
+    #
     # Start the clock. Start it low to avoid issues on the first RisingEdge
+    #
     cocotb.start_soon(clock.start(start_high=False))
     
     dut._log.info("Initialize and reset module")
 
+    #
     # Initial values
+    #
     dut.io_en.value = 0
     dut.io_plInSignal.value = 0
-   
+
+    #
     # Reset DUT
+    #
     dut.reset.value = 1
     for _ in range(10):
         await RisingEdge(dut.clock)
@@ -231,10 +292,14 @@ async def DebuggerModuleTestingBRAM_test(dut):
 
     dut._log.info("Enabling an interrupting chip to receive commands from BRAM")
 
+    #
     # Enable chip
+    #
     dut.io_en.value = 1
 
+    #
     # Set initial input value to prevent it from floating
+    #
     dut.io_inputPin_0.value = 1
     dut.io_inputPin_1.value = 0
     dut.io_inputPin_2.value = 1
@@ -268,7 +333,9 @@ async def DebuggerModuleTestingBRAM_test(dut):
     dut.io_inputPin_30.value = 1
     dut.io_inputPin_31.value = 1
 
+    #
     # Tell the hwdbg to receive BRAM results
+    #
     dut.io_plInSignal.value = 1
     await RisingEdge(dut.clock)
     dut.io_plInSignal.value = 0
@@ -318,4 +385,3 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # Check the final input on the next clock
     #
     await RisingEdge(dut.clock)
-

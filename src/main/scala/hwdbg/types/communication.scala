@@ -73,7 +73,7 @@ class DebuggerRemotePacket() extends Bundle {
  */
 object HwdbgActionEnums extends Enumeration {
 
-  val hwdbgActionSendVersion = Value(0)
+  val hwdbgActionSendVersion = Value(0x8555)
   val hwdbgActionSendPinInformation = Value(1)
   val hwdbgActionConfigureScriptBuffer = Value(2)
 
@@ -89,7 +89,7 @@ object HwdbgActionEnums extends Enumeration {
  */
 object HwdbgResponseEnums extends Enumeration {
 
-  val hwdbgResponseVersion = Value(0)
+  val hwdbgResponseVersion = Value(0x855585)
   val hwdbgResponsePinInformation = Value(1)
   val hwdbgResponseScriptBufferConfigurationResult = Value(2)
 

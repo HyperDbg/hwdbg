@@ -92,7 +92,7 @@ object MemoryCommunicationConfigurations {
   //
   // Default number of bytes used in initialized SRAM memory
   //
-  val DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE: Int = 8192 // 8 KB
+  val DEFAULT_CONFIGURATION_INITIALIZED_MEMORY_SIZE: Int = 8192 / 8 // 8 Kilobits
 
   //
   // Base address of PS to PL SRAM communication memory

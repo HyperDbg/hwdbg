@@ -142,7 +142,7 @@ class DebuggerPacketInterpreter(
           //
           // Set the response packet type
           //
-          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponsePinInformation.id.U
+          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponseVersion.id.U
 
           //
           // This action needs a response
