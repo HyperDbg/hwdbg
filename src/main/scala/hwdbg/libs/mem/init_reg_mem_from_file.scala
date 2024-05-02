@@ -75,6 +75,7 @@ class InitRegMemFromFile(
 
   val actualAddr = Wire(UInt(addrWidth.W))
   val actualData = Wire(UInt(width.W))
+  val actualWrite = Wire(Bool())
 
   //
   // This because the address of the saved registers are using 4 bytes granularities
@@ -86,16 +87,18 @@ class InitRegMemFromFile(
     //
     actualAddr := RegNext(io.addr >> 2)
     actualData := RegNext(io.dataIn)
+    actualWrite := RegNext(io.write)
   } else {
     actualAddr := io.addr >> 2
     actualData := io.dataIn
+    actualWrite := io.write
   }
 
   when(io.enable) {
     val rdwrPort = mem(actualAddr)
     io.dataOut := rdwrPort
 
-    when(io.write) {
+    when(actualWrite) {
       mem(actualAddr) := actualData
     }
   }.otherwise {

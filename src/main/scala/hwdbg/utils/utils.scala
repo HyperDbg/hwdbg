@@ -39,4 +39,19 @@ object BitwiseFunction {
 
     firstNBits
   }
+
+  def printBitsInRange(num: Long, start: Int, end: Int): Long = {
+
+    require(start >= 0 && start <= 63, "Starting point must be between 0 and 63")
+    require(end >= 0 && end <= 63, "Ending point must be between 0 and 63")
+    require(start <= end, "Starting point must be less than or equal to ending point")
+
+    val numBits = end - start + 1 // Number of bits in the range
+    val mask = (1L << numBits) - 1 // Create a bitmask with 'numBits' bits set to 1
+    val shifted = num >>> (java.lang.Long.SIZE - end - 1) // Shift the bits to the right to align the range with the rightmost position
+    val bitsInRange = shifted & mask // Extract the bits within the specified range
+
+    bitsInRange
+  }
+
 }
