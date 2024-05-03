@@ -351,7 +351,9 @@ async def DebuggerModuleTestingBRAM_test(dut):
     clock_counter = 0
     interrupt_not_delivered = False
 
-    while dut.io_psOutInterrupt != 1:
+    while str(dut.io_psOutInterrupt) != "1":
+        
+        # print("State of interrupt: '" + str(dut.io_psOutInterrupt)+ "'")
 
         if clock_counter % 10 == 0:
             print("Number of clock cycles spent in debuggee (PL): " + str(clock_counter))
@@ -382,6 +384,8 @@ async def DebuggerModuleTestingBRAM_test(dut):
     print_bram_content(dut)
 
     #
-    # Check the final input on the next clock
+    # Check the final input on the next clock and run the circuit for a couple
+    # of more clock cycles
     #
-    await RisingEdge(dut.clock)
+    for _ in range(10):
+        await RisingEdge(dut.clock)

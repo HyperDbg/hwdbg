@@ -197,7 +197,6 @@ class DebuggerPacketInterpreter(
             // Configuration was done, send the response (result)
             //
             state := sSendResponse
-
           }
 
         }.otherwise {
