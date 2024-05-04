@@ -8,6 +8,7 @@ VERILOG_SOURCES += $(shell pwd)/../../../generated/SendReceiveSynchronizer.sv
 VERILOG_SOURCES += $(shell pwd)/../../../generated/DebuggerPacketReceiver.sv
 VERILOG_SOURCES += $(shell pwd)/../../../generated/DebuggerPacketSender.sv
 VERILOG_SOURCES += $(shell pwd)/../../../generated/DebuggerPacketInterpreter.sv
+VERILOG_SOURCES += $(shell pwd)/../../../generated/InterpreterSendVersion.sv
 TOPLEVEL = DebuggerModuleTestingBRAM
 MODULE = test_DebuggerModuleTestingBRAM
 

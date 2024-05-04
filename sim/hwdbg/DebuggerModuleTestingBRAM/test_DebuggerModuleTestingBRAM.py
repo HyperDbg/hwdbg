@@ -379,6 +379,11 @@ async def DebuggerModuleTestingBRAM_test(dut):
         print("Debuggee (PL) interrupted Debugger (PS)")
 
     #
+    # Run one more clock cycle to apply the latest BRAM modifications
+    #
+    await RisingEdge(dut.clock)
+
+    #
     # Print contents of BRAM
     #
     print_bram_content(dut)

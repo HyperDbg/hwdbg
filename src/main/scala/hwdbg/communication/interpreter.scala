@@ -19,7 +19,6 @@ import chisel3._
 import chisel3.util.{switch, is}
 import circt.stage.ChiselStage
 
-import hwdbg.version._
 import hwdbg.configs._
 import hwdbg.types._
 
@@ -239,19 +238,36 @@ class DebuggerPacketInterpreter(
             //
 
             //
-            // Set the version
+            // Instantiate the versinon sender
             //
-            sendingData := Version.getEncodedVersion.U
+            val (
+              noNewDataSenderModule,
+              dataValidOutputModule,
+              sendingDataModule
+            ) =
+              InterpreterSendVersion(
+                debug,
+                bramDataWidth
+              )(
+                io.sendWaitForBuffer // send waiting for buffer as an activation signal to the module
+              )
 
             //
-            // Data is valid to send
+            // Set data validity
             //
-            dataValidOutput := true.B
+            dataValidOutput := dataValidOutputModule
 
             //
-            // Only one buffer is enough to send, so we're done
+            // Set data
             //
-            state := sDone
+            sendingData := sendingDataModule
+
+            //
+            // Once sending data is done, we'll go to the Done state
+            //
+            when(noNewDataSenderModule === true.B) {
+              state := sDone
+            }
 
           }.elsewhen(regRequestedActionOfThePacketOutput === HwdbgResponseEnums.hwdbgResponsePinInformation.id.U) {
 
