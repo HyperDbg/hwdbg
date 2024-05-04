@@ -73,9 +73,9 @@ class DebuggerRemotePacket() extends Bundle {
  */
 object HwdbgActionEnums extends Enumeration {
 
-  val hwdbgActionSendVersion = Value(0x8555)
-  val hwdbgActionSendPinInformation = Value(1)
-  val hwdbgActionConfigureScriptBuffer = Value(2)
+  val hwdbgActionSendVersion = Value(1)
+  val hwdbgActionSendPinInformation = Value(2)
+  val hwdbgActionConfigureScriptBuffer = Value(3)
 
 }
 
@@ -89,9 +89,24 @@ object HwdbgActionEnums extends Enumeration {
  */
 object HwdbgResponseEnums extends Enumeration {
 
-  val hwdbgResponseVersion = Value(0x855585)
-  val hwdbgResponsePinInformation = Value(1)
-  val hwdbgResponseScriptBufferConfigurationResult = Value(2)
+  val hwdbgResponseInvalidPacketOrError = Value(1)
+  val hwdbgResponseVersion = Value(2)
+  val hwdbgResponsePinInformation = Value(3)
+  val hwdbgResponseScriptBufferConfigurationResult = Value(4)
+
+}
+
+// -----------------------------------------------------------------------
+
+/**
+ * @brief
+ *   Different responses of hwdbg (SHARED WITH HYPERDBG) (HWDBG_ERROR_ENUMS)
+ * @warning
+ *   Used in HyperDbg
+ */
+object HwdbgErrorEnums extends Enumeration {
+
+  val hwdbgErrorInvalidPacket = Value(1)
 
 }
 

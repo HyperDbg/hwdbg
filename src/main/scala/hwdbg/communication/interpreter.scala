@@ -79,6 +79,11 @@ class DebuggerPacketInterpreter(
   val state = RegInit(sIdle)
 
   //
+  // Last error register
+  //
+  val lastError = RegInit(0.U(bramDataWidth.W))
+
+  //
   // Output pins
   //
   val noNewDataReceiver = WireInit(false.B)
@@ -201,9 +206,24 @@ class DebuggerPacketInterpreter(
         }.otherwise {
 
           //
-          // Invalid action, going to the sDone state
+          // *** Invalid action ***
           //
-          state := sDone
+
+          //
+          // Set the response packet type
+          //
+          regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponseInvalidPacketOrError.id.U
+
+          //
+          // Set the latest error
+          //
+          lastError := HwdbgErrorEnums.hwdbgErrorInvalidPacket.id.U
+
+          //
+          // This action needs a response
+          //
+          state := sSendResponse
+
         }
 
         //
@@ -238,7 +258,7 @@ class DebuggerPacketInterpreter(
             //
 
             //
-            // Instantiate the versinon sender
+            // Instantiate the version sender module
             //
             val (
               noNewDataSenderModule,
@@ -297,22 +317,55 @@ class DebuggerPacketInterpreter(
             dataValidOutput := true.B
 
             //
-            // Only one buffer is enough to send for testing, so we're done
+            // TODO: To be implemented
             //
             state := sDone
 
           }.otherwise {
 
             //
-            // Invalid response, going to the sDone state
+            // *** Invalid (packet) response ***
+            // This will happen in case of 'HwdbgResponseEnums.hwdbgResponseInvalidPacketOrError'
             //
-            state := sDone
 
+            //
+            // Instantiate the invalid packet module
+            //
+            val (
+              noNewDataSenderModule,
+              dataValidOutputModule,
+              sendingDataModule
+            ) =
+              InterpreterSendError(
+                debug,
+                bramDataWidth
+              )(
+                io.sendWaitForBuffer, // send waiting for buffer as an activation signal to the module
+                lastError
+              )
+
+            //
+            // Set data validity
+            //
+            dataValidOutput := dataValidOutputModule
+
+            //
+            // Set data
+            //
+            sendingData := sendingDataModule
+
+            //
+            // Once sending data is done, we'll go to the Done state
+            //
+            when(noNewDataSenderModule === true.B) {
+              state := sDone
+            }
           }
 
           //
           // -------------------------------------------------------------------------
           //
+
         }.otherwise {
 
           //
