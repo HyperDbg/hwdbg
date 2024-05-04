@@ -55,7 +55,7 @@ object DebuggerConfigurations {
   //
   // whether to enable debug or not
   //
-  val ENABLE_DEBUG: Boolean = false
+  val ENABLE_DEBUG: Boolean = true
 
   //
   // Number of input pins

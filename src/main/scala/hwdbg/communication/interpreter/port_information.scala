@@ -21,11 +21,26 @@ import circt.stage.ChiselStage
 
 import hwdbg.version._
 import hwdbg.configs._
+import hwdbg.utils._
+
+object InterpreterPortInformationEnums {
+  object State extends ChiselEnum {
+    val sIdle, sSendCountOfInputPorts, sSendCountOfOutputPorts, sSendPortItems, sDone = Value
+  }
+}
 
 class InterpreterPortInformation(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+    inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
+    outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
 ) extends Module {
+
+  //
+  // Import state enum
+  //
+  import InterpreterPortInformationEnums.State
+  import InterpreterPortInformationEnums.State._
 
   val io = IO(new Bundle {
 
@@ -44,6 +59,11 @@ class InterpreterPortInformation(
   })
 
   //
+  // State registers
+  //
+  val state = RegInit(sIdle)
+
+  //
   // Output pins
   //
   val noNewDataSender = WireInit(false.B)
@@ -55,16 +75,67 @@ class InterpreterPortInformation(
   //
   when(io.en === true.B) {
 
-    //
-    // Set the version
-    //
-    sendingData := Version.getEncodedVersion.U
+    switch(state) {
 
-    //
-    // Sending the version in one clock cycle
-    //
-    noNewDataSender := true.B
-    dataValidOutput := true.B
+      is(sIdle) {
+
+        //
+        // Going to the next state (sending count of input ports)
+        //
+        state := sSendCountOfInputPorts
+      }
+      is(sSendCountOfInputPorts) {
+
+        //
+        // Send count of input ports
+        //
+        val numberOfInputPorts = inputPortsConfiguration.size
+        LogInfo(debug)("Number of input ports (PORT_PINS_MAP_INPUT): " + numberOfInputPorts)
+
+        sendingData := numberOfInputPorts.U
+
+        //
+        // Data is valid
+        //
+        noNewDataSender := true.B
+        dataValidOutput := true.B
+
+        //
+        // Going to the next state (sending count of input ports)
+        //
+        state := sSendCountOfOutputPorts
+
+      }
+      is(sSendCountOfOutputPorts) {
+
+        //
+        // Send count of output ports
+        //
+        val numberOfOutputPorts = outputPortsConfiguration.size
+        LogInfo(debug)("Number of output ports (PORT_PINS_MAP_OUTPUT): " + numberOfOutputPorts)
+
+        sendingData := numberOfOutputPorts.U
+
+        //
+        // Data is valid
+        //
+        noNewDataSender := true.B
+        dataValidOutput := true.B
+
+        //
+        // Next, we gonna send each ports' information ()
+        //
+        state := sSendPortItems
+
+      }
+      is(sSendPortItems) {
+
+        //
+        //
+        //
+
+      }
+    }
 
   }
 
@@ -83,7 +154,9 @@ object InterpreterPortInformation {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH
+      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+      inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
+      outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
   )(
       en: Bool
   ): (Bool, Bool, UInt) = {

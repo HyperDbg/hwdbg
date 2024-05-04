@@ -71,7 +71,10 @@ class InitRegMemFromFile(
     val dataOut = Output(UInt(width.W))
   })
 
-  val mem = RegInit(VecInit(InitRegMemFromFileTools.readmemh(debug, memoryFile, width)))
+  //
+  // Not needed to show the BRAM information
+  //
+  val mem = RegInit(VecInit(InitRegMemFromFileTools.readmemh(false, memoryFile, width)))
 
   val actualAddr = Wire(UInt(addrWidth.W))
   val actualData = Wire(UInt(width.W))

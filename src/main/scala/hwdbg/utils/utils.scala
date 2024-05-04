@@ -25,7 +25,9 @@ import chisel3.util._
 object LogInfo {
 
   def apply(debug: Boolean)(message: String): Unit = {
-    println("[*] debug msg: " + message)
+    if (debug) {
+      println("[*] debug msg: " + message)
+    }
   }
 }
 

@@ -296,9 +296,36 @@ class DebuggerPacketInterpreter(
             //
 
             //
-            // TODO: To be implemented
+            // Instantiate the port information module
             //
-            state := sDone
+            val (
+              noNewDataSenderModule,
+              dataValidOutputModule,
+              sendingDataModule
+            ) =
+              InterpreterPortInformation(
+                debug,
+                bramDataWidth
+              )(
+                io.sendWaitForBuffer // send waiting for buffer as an activation signal to the module
+              )
+
+            //
+            // Set data validity
+            //
+            dataValidOutput := dataValidOutputModule
+
+            //
+            // Set data
+            //
+            sendingData := sendingDataModule
+
+            //
+            // Once sending data is done, we'll go to the Done state
+            //
+            when(noNewDataSenderModule === true.B) {
+              state := sDone
+            }
 
           }.elsewhen(regRequestedActionOfThePacketOutput === HwdbgResponseEnums.hwdbgResponseScriptBufferConfigurationResult.id.U) {
 
