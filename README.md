@@ -26,7 +26,7 @@
     |_|_||__/_/ \___||___/\_. |     ┃
                           <___'     ┃
                                     ┃      ╱|、
-  HyperDbg's chip-level Debugger    ┃     (˚ˎ 。7
+  HyperDbg's chip-level debugger    ┃     (˚ˎ 。7
                                     ┃     |、 ˜〵
             ┗━━━━━━━━━━━━━━━━━━━━━━━┛     じしˍ,)ノ
 ```
