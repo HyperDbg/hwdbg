@@ -17,6 +17,8 @@ package hwdbg.types
 
 import chisel3._
 
+// -----------------------------------------------------------------------
+
 //
 // Structure in C:
 //
@@ -60,6 +62,129 @@ class DebuggerRemotePacket() extends Bundle {
 
     val startOfDataBuffer =
       (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth + RequestedActionOfThePacket.getWidth) / 8
+  }
+}
+
+// -----------------------------------------------------------------------
+
+//
+// Structure in C:
+//
+// typedef struct _DEBUGGER_REMOTE_PACKET
+// {
+//     BYTE                                    Checksum;
+//     UINT64                                  Indicator; /* Shows the type of the packet */
+//     DEBUGGER_REMOTE_PACKET_TYPE             TypeOfThePacket;
+//     DEBUGGER_REMOTE_PACKET_REQUESTED_ACTION RequestedActionOfThePacket;
+//
+// } DEBUGGER_REMOTE_PACKET, *PDEBUGGER_REMOTE_PACKET;
+//
+
+/**
+ * @brief
+ *   The packet used for communication with the remote debugger
+ */
+class DebuggerRemotePacket() extends Bundle {
+
+  //
+  // Structure fields
+  //
+  val Checksum = UInt(8.W) // 1 byte
+  val Alignment0 = UInt((64 - 8).W) // 7 bytes
+  val Indicator = UInt(64.W) // 8 bytes
+  val TypeOfThePacket = UInt(32.W) // 4 bytes
+  val RequestedActionOfThePacket = UInt(32.W) // 4 bytes
+
+  //
+  // Offset of structure fields
+  //
+  object Offset {
+
+    val checksum = (0) / 8
+
+    val indicator = (Checksum.getWidth + Alignment0.getWidth) / 8
+
+    val typeOfThePacket = (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth) / 8
+
+    val requestedActionOfThePacket = (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth) / 8
+
+    val startOfDataBuffer =
+      (Checksum.getWidth + Alignment0.getWidth + Indicator.getWidth + TypeOfThePacket.getWidth + RequestedActionOfThePacket.getWidth) / 8
+  }
+}
+
+// -----------------------------------------------------------------------
+
+//
+// Structure in C:
+//
+// typedef struct _HWDBG_PORT_INFORMATION
+// {
+//     UINT32 CountOfPorts;
+//
+//     /*
+//
+//     Here the pin information details will be available
+//
+//         UINT16     | UINT16
+//         Port Index | Port Size
+//
+//     */
+//
+// } HWDBG_PORT_INFORMATION, *PHWDBG_PORT_INFORMATION;
+
+/**
+ * @brief
+ *   The structure of port information in hwdbg
+ */
+class HwdbgPortInformation() extends Bundle {
+
+  //
+  // Structure fields
+  //
+  val CountOfPorts = UInt(32.W) // 4 bytes
+
+  //
+  // Offset of structure fields
+  //
+  object Offset {
+
+    val countOfPorts = (0) / 8
+  }
+}
+
+// -----------------------------------------------------------------------
+
+//
+// Structure in C:
+//
+// typedef struct _HWDBG_PORT_INFORMATION_ITEMS
+// {
+//     UINT16 PortIndex;
+//     UINT16 PortSize;
+//
+// } HWDBG_PORT_INFORMATION_ITEMS, *PHWDBG_PORT_INFORMATION_ITEMS;
+
+/**
+ * @brief
+ *   The structure of port information (each item) in hwdbg
+ */
+class HwdbgPortInformationItems() extends Bundle {
+
+  //
+  // Structure fields
+  //
+  val PortIndex = UInt(16.W) // 2 bytes
+  val PortSize = UInt(16.W) // 2 bytes
+
+  //
+  // Offset of structure fields
+  //
+  object Offset {
+
+    val portIndex = (0) / 8
+
+    val portSize = (PortIndex.getWidth) / 8
   }
 }
 
