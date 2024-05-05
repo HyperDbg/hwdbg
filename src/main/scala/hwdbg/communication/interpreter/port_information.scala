@@ -131,8 +131,13 @@ class InterpreterPortInformation(
       is(sSendPortItems) {
 
         //
+        // Send input port items
         //
-        //
+        LogInfo(debug)("Iterating over input pins:")
+
+        inputPortsConfiguration.foreach { case (port, pins) =>
+          LogInfo(debug)(s"Port $port has $pins pins")
+        }
 
       }
     }
