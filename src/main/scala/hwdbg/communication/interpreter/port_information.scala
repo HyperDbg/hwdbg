@@ -16,7 +16,7 @@
 package hwdbg.communication.interpreter
 
 import chisel3._
-import chisel3.util.{switch, is}
+import chisel3.util.{switch, is, log2Ceil}
 import circt.stage.ChiselStage
 
 import hwdbg.version._
@@ -25,7 +25,7 @@ import hwdbg.utils._
 
 object InterpreterPortInformationEnums {
   object State extends ChiselEnum {
-    val sIdle, sSendCountOfInputPorts, sSendCountOfOutputPorts, sSendPortItems, sDone = Value
+    val sIdle, sSendCountOfInputPorts, sSendCountOfOutputPorts, sSendInputPortItems, sSendOutputPortItems, sDone = Value
   }
 }
 
@@ -64,6 +64,32 @@ class InterpreterPortInformation(
   val state = RegInit(sIdle)
 
   //
+  // Convert input port pins into vector
+  //
+  val inputPinsVec = VecInit(inputPortsConfiguration.values.toSeq.map(_.U))
+
+  //
+  // Convert output port pins into vector
+  //
+  val outputPinsVec = VecInit(outputPortsConfiguration.values.toSeq.map(_.U))
+
+  //
+  // Get number of input/output ports
+  //
+  val numberOfInputPorts = inputPortsConfiguration.size
+  val numberOfOutputPorts = outputPortsConfiguration.size
+
+  //
+  // Determine the width for numberOfSentPins based on conditions
+  //
+  val numberOfSentPinsWidth = if (numberOfInputPorts > numberOfOutputPorts) log2Ceil(numberOfInputPorts) else log2Ceil(numberOfOutputPorts)
+
+  //
+  // Registers for keeping track of sent pin details
+  //
+  val numberOfSentPins = RegInit(0.U(numberOfSentPinsWidth.W))
+
+  //
   // Output pins
   //
   val noNewDataSender = WireInit(false.B)
@@ -89,7 +115,6 @@ class InterpreterPortInformation(
         //
         // Send count of input ports
         //
-        val numberOfInputPorts = inputPortsConfiguration.size
         LogInfo(debug)("Number of input ports (PORT_PINS_MAP_INPUT): " + numberOfInputPorts)
 
         sendingData := numberOfInputPorts.U
@@ -97,7 +122,6 @@ class InterpreterPortInformation(
         //
         // Data is valid
         //
-        noNewDataSender := true.B
         dataValidOutput := true.B
 
         //
@@ -111,7 +135,6 @@ class InterpreterPortInformation(
         //
         // Send count of output ports
         //
-        val numberOfOutputPorts = outputPortsConfiguration.size
         LogInfo(debug)("Number of output ports (PORT_PINS_MAP_OUTPUT): " + numberOfOutputPorts)
 
         sendingData := numberOfOutputPorts.U
@@ -119,16 +142,15 @@ class InterpreterPortInformation(
         //
         // Data is valid
         //
-        noNewDataSender := true.B
         dataValidOutput := true.B
 
         //
         // Next, we gonna send each ports' information ()
         //
-        state := sSendPortItems
+        state := sSendInputPortItems
 
       }
-      is(sSendPortItems) {
+      is(sSendInputPortItems) {
 
         //
         // Send input port items
@@ -139,6 +161,93 @@ class InterpreterPortInformation(
           LogInfo(debug)(s"Port $port has $pins pins")
         }
 
+        //
+        // Adjust data
+        //
+        sendingData := inputPinsVec(numberOfSentPins)
+
+        //
+        // Data is valid
+        //
+        dataValidOutput := true.B
+
+        when(numberOfSentPins === numberOfInputPorts.U) {
+
+          //
+          // Reset the pins sent for sending output details
+          //
+          numberOfSentPins := 0.U
+
+          state := sSendOutputPortItems
+
+        }.otherwise {
+
+          //
+          // Send next index
+          //
+          numberOfSentPins := numberOfSentPins + 1.U
+
+          //
+          // Stay at the same state
+          //
+          state := sSendInputPortItems
+        }
+
+      }
+      is(sSendOutputPortItems) {
+
+        //
+        // Send output port items
+        //
+        LogInfo(debug)("Iterating over output pins:")
+
+        outputPortsConfiguration.foreach { case (port, pins) =>
+          LogInfo(debug)(s"Port $port has $pins pins")
+        }
+
+        //
+        // Adjust data
+        //
+        sendingData := outputPinsVec(numberOfSentPins)
+
+        //
+        // Data is valid
+        //
+        dataValidOutput := true.B
+
+        when(numberOfSentPins === numberOfOutputPorts.U) {
+
+          //
+          // Reset the pins sent for sending input details (later)
+          //
+          numberOfSentPins := 0.U
+
+          state := sDone
+
+        }.otherwise {
+
+          //
+          // Send next index
+          //
+          numberOfSentPins := numberOfSentPins + 1.U
+
+          //
+          // Stay at the same state
+          //
+          state := sSendOutputPortItems
+        }
+      }
+      is(sDone) {
+
+        //
+        // Indicate that sending data is done
+        //
+        noNewDataSender := true.B
+
+        //
+        // Goto the idle state
+        //
+        state := sIdle
       }
     }
 
