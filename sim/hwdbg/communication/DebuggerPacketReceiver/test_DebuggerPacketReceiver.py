@@ -18,7 +18,7 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import Timer
 from cocotb.types import LogicArray
 
 '''
@@ -73,7 +73,7 @@ async def DebuggerPacketReceiver_test(dut):
     #
     dut.reset.value = 1
     for _ in range(10):
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")
     dut.reset.value = 0
 
     dut._log.info("Enabling chip")
@@ -92,7 +92,7 @@ async def DebuggerPacketReceiver_test(dut):
         # a rising-edge detector, so we'll need to make it low)
         #
         dut.io_plInSignal.value = 1
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")
         dut.io_plInSignal.value = 0
 
         #
@@ -152,7 +152,7 @@ async def DebuggerPacketReceiver_test(dut):
                 #
                 if test_number % 3 == 0:
                     dut.io_noNewDataReceiver.value = 1
-                    await RisingEdge(dut.clock)
+                    await Timer(10, units="ns")
                     dut.io_noNewDataReceiver.value = 0
                 else:
                     #
@@ -168,20 +168,20 @@ async def DebuggerPacketReceiver_test(dut):
             #
             # Go to the next clock cycle
             #
-            await RisingEdge(dut.clock)
+            await Timer(10, units="ns")
 
         if test_number % 3 != 0:
             dut.io_noNewDataReceiver.value = 1
-            await RisingEdge(dut.clock)
+            await Timer(10, units="ns")
             dut.io_noNewDataReceiver.value = 0
 
         #
         # Run extra waiting clocks
         #
         for _ in range(10):
-            await RisingEdge(dut.clock)
+            await Timer(10, units="ns")
 
         #
         # Check the final input on the next clock
         #
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")

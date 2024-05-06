@@ -18,7 +18,7 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import Timer
 from cocotb.types import LogicArray
 
 '''
@@ -72,7 +72,7 @@ async def DebuggerPacketSender_test(dut):
     #
     dut.reset.value = 1
     for _ in range(10):
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")
     dut.reset.value = 0
 
     dut._log.info("Enabling chip")
@@ -96,7 +96,7 @@ async def DebuggerPacketSender_test(dut):
         # a rising-edge detector, so we'll need to make it low)
         #
         dut.io_beginSendingBuffer.value = 1
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")
         dut.io_beginSendingBuffer.value = 0
 
         #
@@ -113,7 +113,7 @@ async def DebuggerPacketSender_test(dut):
         #
         # Synchronize with the clock. This will apply the initial values
         #
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")
         
         #
         # This will change the behavior of the data producer to only
@@ -138,7 +138,7 @@ async def DebuggerPacketSender_test(dut):
                     #
                     dut.io_sendingData.value = val
 
-                await RisingEdge(dut.clock)
+                await Timer(10, units="ns")
 
         #
         # Now, tell the sender module that there is no longer needed to send data
@@ -146,20 +146,20 @@ async def DebuggerPacketSender_test(dut):
         for i in range(100):
             if dut.io_sendWaitForBuffer.value == 1:
                 dut.io_noNewDataSender.value = 1
-                await RisingEdge(dut.clock)
+                await Timer(10, units="ns")
                 dut.io_noNewDataSender.value = 0
                 break
             
-            await RisingEdge(dut.clock)
+            await Timer(10, units="ns")
 
 
         #
         # Run extra waiting clocks
         #
         for _ in range(10):
-            await RisingEdge(dut.clock)
+            await Timer(10, units="ns")
 
         #
         # Check the final input on the next clock
         #
-        await RisingEdge(dut.clock)
+        await Timer(10, units="ns")
