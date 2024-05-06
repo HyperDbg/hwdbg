@@ -27,28 +27,18 @@ import hwdbg.communication.interpreter._
 
 class DebuggerMain(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-    numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-    numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+    numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
-    outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
+    portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
 ) extends Module {
 
   //
-  // Ensure sum of input port values equals numberOfInputPins (NUMBER_OF_INPUT_PINS)
+  // Ensure sum of input port values equals numberOfPins (NUMBER_OF_PINS)
   //
   require(
-    inputPortsConfiguration.values.sum == numberOfInputPins,
-    "err, the sum of the inputPortsConfiguration (PORT_PINS_MAP_INPUT) values must equal the numberOfInputPins (NUMBER_OF_INPUT_PINS)."
-  )
-
-  //
-  // Ensure sum of output port values equals numberOfOutputPins (NUMBER_OF_OUTPUT_PINS)
-  //
-  require(
-    outputPortsConfiguration.values.sum == numberOfOutputPins,
-    "err, the sum of the outputPortsConfiguration (PORT_PINS_MAP_OUTPUT) values must equal the numberOfOutputPins (NUMBER_OF_OUTPUT_PINS)."
+    portsConfiguration.values.sum == numberOfPins,
+    "err, the sum of the portsConfiguration (PORT_PINS_MAP) values must equal the numberOfPins (NUMBER_OF_PINS)."
   )
 
   val io = IO(new Bundle {
@@ -61,8 +51,8 @@ class DebuggerMain(
     //
     // Input/Output signals
     //
-    val inputPin = Input(Vec(numberOfInputPins, UInt((1.W)))) // input pins
-    val outputPin = Output(Vec(numberOfOutputPins, UInt((1.W)))) // output pins
+    val inputPin = Input(Vec(numberOfPins, UInt((1.W)))) // input pins
+    val outputPin = Output(Vec(numberOfPins, UInt((1.W)))) // output pins
 
     //
     // Interrupt signals (lines)
@@ -168,7 +158,7 @@ class DebuggerMain(
   // -----------------------------------------------------------------------
   // Configure the output signals
   //
-  for (i <- 0 until numberOfOutputPins) {
+  for (i <- 0 until numberOfPins) {
     io.outputPin(i) := 0.U
   }
 
@@ -183,12 +173,10 @@ object DebuggerMain {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-      numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-      numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+      numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
-      outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
+      portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
   )(
       en: Bool,
       inputPin: Vec[UInt],
@@ -199,16 +187,14 @@ object DebuggerMain {
     val debuggerMainModule = Module(
       new DebuggerMain(
         debug,
-        numberOfInputPins,
-        numberOfOutputPins,
+        numberOfPins,
         bramAddrWidth,
         bramDataWidth,
-        inputPortsConfiguration,
-        outputPortsConfiguration
+        portsConfiguration
       )
     )
 
-    val outputPin = Wire(Vec(numberOfOutputPins, UInt((1.W))))
+    val outputPin = Wire(Vec(numberOfPins, UInt((1.W))))
     val psOutInterrupt = Wire(Bool())
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
     val wrEna = Wire(Bool())

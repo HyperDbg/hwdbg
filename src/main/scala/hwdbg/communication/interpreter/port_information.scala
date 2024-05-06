@@ -25,15 +25,14 @@ import hwdbg.utils._
 
 object InterpreterPortInformationEnums {
   object State extends ChiselEnum {
-    val sIdle, sSendCountOfInputPorts, sSendCountOfOutputPorts, sSendInputPortItems, sSendOutputPortItems, sDone = Value
+    val sIdle, sSendCountOfPorts, sSendPortItems, sDone = Value
   }
 }
 
 class InterpreterPortInformation(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
-    outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
+    portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
 ) extends Module {
 
   //
@@ -66,25 +65,18 @@ class InterpreterPortInformation(
   //
   // Get number of input/output ports
   //
-  val numberOfInputPorts = inputPortsConfiguration.size
-  val numberOfOutputPorts = outputPortsConfiguration.size
+  val numberOfPorts = portsConfiguration.size
 
   //
   // Convert input port pins into vector
   //
-  // val inputPinsVec = VecInit(inputPortsConfiguration.values.toSeq.map(_.U))
-  val inputPinsVec = RegInit(VecInit(Seq.fill(numberOfInputPorts)(0.U(bramDataWidth.W))))
+  // val pinsVec = VecInit(portsConfiguration.values.toSeq.map(_.U))
+  val pinsVec = RegInit(VecInit(Seq.fill(numberOfPorts)(0.U(bramDataWidth.W))))
 
   //
-  // Convert output port pins into vector
+  // Determine the width for numberOfSentPins
   //
-  // val outputPinsVec = VecInit(outputPortsConfiguration.values.toSeq.map(_.U))
-  val outputPinsVec = RegInit(VecInit(Seq.fill(numberOfOutputPorts)(0.U(bramDataWidth.W))))
-
-  //
-  // Determine the width for numberOfSentPins based on conditions
-  //
-  val numberOfSentPinsWidth = if (numberOfInputPorts > numberOfOutputPorts) log2Ceil(numberOfInputPorts) else log2Ceil(numberOfOutputPorts)
+  val numberOfSentPinsWidth = log2Ceil(numberOfPorts)
 
   //
   // Registers for keeping track of sent pin details
@@ -110,16 +102,16 @@ class InterpreterPortInformation(
         //
         // Going to the next state (sending count of input ports)
         //
-        state := sSendCountOfInputPorts
+        state := sSendCountOfPorts
       }
-      is(sSendCountOfInputPorts) {
+      is(sSendCountOfPorts) {
 
         //
-        // Send count of input ports
+        // Send count of input.output ports
         //
-        LogInfo(debug)("Number of input ports (PORT_PINS_MAP_INPUT): " + numberOfInputPorts)
+        LogInfo(debug)("Number of ports (PORT_PINS_MAP): " + numberOfPorts)
 
-        sendingData := numberOfInputPorts.U
+        sendingData := numberOfPorts.U
 
         //
         // Data is valid
@@ -131,48 +123,18 @@ class InterpreterPortInformation(
         //
         LogInfo(debug)("Iterating over input pins:")
 
-        inputPortsConfiguration.foreach { case (port, pins) =>
+        portsConfiguration.foreach { case (port, pins) =>
           LogInfo(debug)(s"Port $port has $pins pins")
-          inputPinsVec(port) := pins.U
+          pinsVec(port) := pins.U
         }
 
         //
         // Going to the next state (sending count of input ports)
         //
-        state := sSendCountOfOutputPorts
+        state := sSendPortItems
 
       }
-      is(sSendCountOfOutputPorts) {
-
-        //
-        // Send count of output ports
-        //
-        LogInfo(debug)("Number of output ports (PORT_PINS_MAP_OUTPUT): " + numberOfOutputPorts)
-
-        sendingData := numberOfOutputPorts.U
-
-        //
-        // Data is valid
-        //
-        dataValidOutput := true.B
-
-        //
-        // Fill the port info
-        //
-        LogInfo(debug)("Iterating over output pins:")
-
-        outputPortsConfiguration.foreach { case (port, pins) =>
-          LogInfo(debug)(s"Port $port has $pins pins")
-          outputPinsVec(port) := pins.U
-        }
-
-        //
-        // Next, we gonna send each ports' information ()
-        //
-        state := sSendInputPortItems
-
-      }
-      is(sSendInputPortItems) {
+      is(sSendPortItems) {
 
         //
         // Send input port items
@@ -181,56 +143,17 @@ class InterpreterPortInformation(
         //
         // Adjust data
         //
-        sendingData := inputPinsVec(numberOfSentPins)
+        sendingData := pinsVec(numberOfSentPins)
 
         //
         // Data is valid
         //
         dataValidOutput := true.B
 
-        when(numberOfSentPins === numberOfInputPorts.U) {
+        when(numberOfSentPins === (numberOfPorts - 1).U) {
 
           //
-          // Reset the pins sent for sending output details
-          //
-          numberOfSentPins := 0.U
-
-          state := sSendOutputPortItems
-
-        }.otherwise {
-
-          //
-          // Send next index
-          //
-          numberOfSentPins := numberOfSentPins + 1.U
-
-          //
-          // Stay at the same state
-          //
-          state := sSendInputPortItems
-        }
-
-      }
-      is(sSendOutputPortItems) {
-
-        //
-        // Send output port items
-        //
-
-        //
-        // Adjust data
-        //
-        sendingData := outputPinsVec(numberOfSentPins)
-
-        //
-        // Data is valid
-        //
-        dataValidOutput := true.B
-
-        when(numberOfSentPins === numberOfOutputPorts.U) {
-
-          //
-          // Reset the pins sent for sending input details (later)
+          // Reset the pins sent for sending details
           //
           numberOfSentPins := 0.U
 
@@ -246,8 +169,9 @@ class InterpreterPortInformation(
           //
           // Stay at the same state
           //
-          state := sSendOutputPortItems
+          state := sSendPortItems
         }
+
       }
       is(sDone) {
 
@@ -281,8 +205,7 @@ object InterpreterPortInformation {
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
       bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-      inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
-      outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
+      portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
   )(
       en: Bool
   ): (Bool, Bool, UInt) = {
@@ -290,7 +213,8 @@ object InterpreterPortInformation {
     val interpreterPortInformation = Module(
       new InterpreterPortInformation(
         debug,
-        bramDataWidth
+        bramDataWidth,
+        portsConfiguration
       )
     )
 

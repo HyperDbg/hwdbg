@@ -76,10 +76,10 @@ class DebuggerRemotePacket() extends Bundle {
 //
 //     /*
 //
-//     Here the pin information details will be available
+//     Here the pin information details will be available.
 //
-//         UINT16     | UINT16
-//         Port Index | Port Size
+//         UINT32
+//         Port Size
 //
 //     */
 //
@@ -112,8 +112,7 @@ class HwdbgPortInformation() extends Bundle {
 //
 // typedef struct _HWDBG_PORT_INFORMATION_ITEMS
 // {
-//     UINT16 PortIndex;
-//     UINT16 PortSize;
+//     UINT32 PortIndex;
 //
 // } HWDBG_PORT_INFORMATION_ITEMS, *PHWDBG_PORT_INFORMATION_ITEMS;
 
@@ -126,17 +125,14 @@ class HwdbgPortInformationItems() extends Bundle {
   //
   // Structure fields
   //
-  val PortIndex = UInt(16.W) // 2 bytes
-  val PortSize = UInt(16.W) // 2 bytes
+  val PortSize = UInt(32.W) // 4 bytes
 
   //
   // Offset of structure fields
   //
   object Offset {
 
-    val portIndex = (0) / 8
-
-    val portSize = (PortIndex.getWidth) / 8
+    val portSize = (0) / 8
   }
 }
 
@@ -168,7 +164,7 @@ object HwdbgResponseEnums extends Enumeration {
 
   val hwdbgResponseInvalidPacketOrError = Value(1)
   val hwdbgResponseVersion = Value(2)
-  val hwdbgResponsePinInformation = Value(3)
+  val hwdbgResponsePinInformation = Value(0x8595)
   val hwdbgResponseScriptBufferConfigurationResult = Value(4)
 
 }

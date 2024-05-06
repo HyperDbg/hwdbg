@@ -26,23 +26,12 @@ object DebuggerPorts {
 
   //
   // The following constant shows the key value object of the mappings
-  // of pins to ports (used for inputs)
+  // of pins to ports (used for inputs/outputs)
   //    For example,
   //                port 0 (in) -> contains 12 pins
   //                port 1 (in) -> contains 9 pins
-  //                port 2 (in) -> contains 11 pins
   //
-  val PORT_PINS_MAP_INPUT: Map[Int, Int] = Map(0 -> 12, 1 -> 9, 2 -> 11)
-
-  //
-  // The following constant shows the key value object of the mappings
-  // of pins to ports (used for outputs)
-  //    For example,
-  //                port 0 (out) -> contains 12 pins
-  //                port 1 (out) -> contains 9 pins
-  //                port 2 (out) -> contains 11 pins
-  //
-  val PORT_PINS_MAP_OUTPUT: Map[Int, Int] = Map(0 -> 4, 1 -> 7, 2 -> 11, 3 -> 10)
+  val PORT_PINS_MAP: Map[Int, Int] = Map(0 -> 12, 1 -> 9, 2 -> 11)
 
 }
 
@@ -58,14 +47,9 @@ object DebuggerConfigurations {
   val ENABLE_DEBUG: Boolean = true
 
   //
-  // Number of input pins
+  // Number of input/output pins
   //
-  val NUMBER_OF_INPUT_PINS: Int = 32
-
-  //
-  // Number of output pins
-  //
-  val NUMBER_OF_OUTPUT_PINS: Int = 32
+  val NUMBER_OF_PINS: Int = 32
 
   //
   // Address width of the Block RAM (BRAM)

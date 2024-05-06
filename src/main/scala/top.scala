@@ -23,12 +23,10 @@ import hwdbg.configs._
 
 class DebuggerModule(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
-    numberOfInputPins: Int = DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-    numberOfOutputPins: Int = DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+    numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-    inputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_INPUT,
-    outputPortsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP_OUTPUT
+    portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
 ) extends Module {
   val io = IO(new Bundle {
 
@@ -40,8 +38,8 @@ class DebuggerModule(
     //
     // Input/Output signals
     //
-    val inputPin = Input(Vec(numberOfInputPins, UInt((1.W)))) // input pins
-    val outputPin = Output(Vec(numberOfOutputPins, UInt((1.W)))) // output pins
+    val inputPin = Input(Vec(numberOfPins, UInt((1.W)))) // input pins
+    val outputPin = Output(Vec(numberOfPins, UInt((1.W)))) // output pins
 
     //
     // Interrupt signals (lines)
@@ -65,12 +63,10 @@ class DebuggerModule(
   val (outputPin, psOutInterrupt, rdWrAddr, wrEna, wrData) =
     DebuggerMain(
       debug,
-      numberOfInputPins,
-      numberOfOutputPins,
+      numberOfPins,
       bramAddrWidth,
       bramDataWidth,
-      inputPortsConfiguration,
-      outputPortsConfiguration
+      portsConfiguration
     )(
       io.en,
       io.inputPin,
@@ -95,12 +91,10 @@ object Main extends App {
     ChiselStage.emitSystemVerilog(
       new DebuggerModule(
         DebuggerConfigurations.ENABLE_DEBUG,
-        DebuggerConfigurations.NUMBER_OF_INPUT_PINS,
-        DebuggerConfigurations.NUMBER_OF_OUTPUT_PINS,
+        DebuggerConfigurations.NUMBER_OF_PINS,
         DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
         DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
-        DebuggerPorts.PORT_PINS_MAP_INPUT,
-        DebuggerPorts.PORT_PINS_MAP_OUTPUT
+        DebuggerPorts.PORT_PINS_MAP
       ),
       firtoolOpts = Array(
         "-disable-all-randomization",
