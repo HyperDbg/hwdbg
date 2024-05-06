@@ -64,20 +64,22 @@ class InterpreterPortInformation(
   val state = RegInit(sIdle)
 
   //
-  // Convert input port pins into vector
-  //
-  val inputPinsVec = VecInit(inputPortsConfiguration.values.toSeq.map(_.U))
-
-  //
-  // Convert output port pins into vector
-  //
-  val outputPinsVec = VecInit(outputPortsConfiguration.values.toSeq.map(_.U))
-
-  //
   // Get number of input/output ports
   //
   val numberOfInputPorts = inputPortsConfiguration.size
   val numberOfOutputPorts = outputPortsConfiguration.size
+
+  //
+  // Convert input port pins into vector
+  //
+  // val inputPinsVec = VecInit(inputPortsConfiguration.values.toSeq.map(_.U))
+  val inputPinsVec = RegInit(VecInit(Seq.fill(numberOfInputPorts)(0.U(bramDataWidth.W))))
+
+  //
+  // Convert output port pins into vector
+  //
+  // val outputPinsVec = VecInit(outputPortsConfiguration.values.toSeq.map(_.U))
+  val outputPinsVec = RegInit(VecInit(Seq.fill(numberOfOutputPorts)(0.U(bramDataWidth.W))))
 
   //
   // Determine the width for numberOfSentPins based on conditions
@@ -125,6 +127,16 @@ class InterpreterPortInformation(
         dataValidOutput := true.B
 
         //
+        // Fill the port info
+        //
+        LogInfo(debug)("Iterating over input pins:")
+
+        inputPortsConfiguration.foreach { case (port, pins) =>
+          LogInfo(debug)(s"Port $port has $pins pins")
+          inputPinsVec(port) := pins.U
+        }
+
+        //
         // Going to the next state (sending count of input ports)
         //
         state := sSendCountOfOutputPorts
@@ -145,6 +157,16 @@ class InterpreterPortInformation(
         dataValidOutput := true.B
 
         //
+        // Fill the port info
+        //
+        LogInfo(debug)("Iterating over output pins:")
+
+        outputPortsConfiguration.foreach { case (port, pins) =>
+          LogInfo(debug)(s"Port $port has $pins pins")
+          outputPinsVec(port) := pins.U
+        }
+
+        //
         // Next, we gonna send each ports' information ()
         //
         state := sSendInputPortItems
@@ -155,11 +177,6 @@ class InterpreterPortInformation(
         //
         // Send input port items
         //
-        LogInfo(debug)("Iterating over input pins:")
-
-        inputPortsConfiguration.foreach { case (port, pins) =>
-          LogInfo(debug)(s"Port $port has $pins pins")
-        }
 
         //
         // Adjust data
@@ -199,11 +216,6 @@ class InterpreterPortInformation(
         //
         // Send output port items
         //
-        LogInfo(debug)("Iterating over output pins:")
-
-        outputPortsConfiguration.foreach { case (port, pins) =>
-          LogInfo(debug)(s"Port $port has $pins pins")
-        }
 
         //
         // Adjust data

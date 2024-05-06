@@ -1,1 +1,1 @@
-make SIM=verilator WAVES=1
+make SIM=icarus WAVES=1

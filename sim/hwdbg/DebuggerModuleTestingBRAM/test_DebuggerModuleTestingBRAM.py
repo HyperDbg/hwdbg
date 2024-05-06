@@ -18,7 +18,7 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import RisingEdge, Timer
 from cocotb.types import LogicArray
 
 maximum_number_of_clock_cycles = 1000
@@ -265,9 +265,9 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # assert LogicArray(dut.io_outputPin_31.value) == LogicArray("Z")
 
     #
-    # Create a 10ns period clock on port clock
+    # Create a 1ns period clock on port clock
     #
-    clock = Clock(dut.clock, 10, units="ns")
+    clock = Clock(dut.clock, 1, units="ns")
     
     #
     # Start the clock. Start it low to avoid issues on the first RisingEdge
@@ -287,7 +287,8 @@ async def DebuggerModuleTestingBRAM_test(dut):
     #
     dut.reset.value = 1
     for _ in range(10):
-        await RisingEdge(dut.clock)
+        # await RisingEdge(dut.clock)
+        await Timer(1, units="ns")
     dut.reset.value = 0
 
     dut._log.info("Enabling an interrupting chip to receive commands from BRAM")
@@ -337,13 +338,13 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # Tell the hwdbg to receive BRAM results
     #
     dut.io_plInSignal.value = 1
-    await RisingEdge(dut.clock)
+    await Timer(1, units="ns")
     dut.io_plInSignal.value = 0
 
     #
     # Synchronize with the clock. This will regisiter the initial `inputPinX` value
     #
-    await RisingEdge(dut.clock)
+    await Timer(1, units="ns")
 
     #
     # Wait until the debuggee sends an interrupt to debugger
@@ -359,7 +360,7 @@ async def DebuggerModuleTestingBRAM_test(dut):
             print("Number of clock cycles spent in debuggee (PL): " + str(clock_counter))
         
         clock_counter = clock_counter + 1
-        await RisingEdge(dut.clock)
+        await Timer(1, units="ns")
 
         #
         # Apply a limitation to the number of clock cycles that
@@ -381,7 +382,7 @@ async def DebuggerModuleTestingBRAM_test(dut):
     #
     # Run one more clock cycle to apply the latest BRAM modifications
     #
-    await RisingEdge(dut.clock)
+    await Timer(1, units="ns")
 
     #
     # Print contents of BRAM
@@ -393,4 +394,4 @@ async def DebuggerModuleTestingBRAM_test(dut):
     # of more clock cycles
     #
     for _ in range(10):
-        await RisingEdge(dut.clock)
+        await Timer(1, units="ns")

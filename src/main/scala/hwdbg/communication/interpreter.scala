@@ -298,6 +298,7 @@ class DebuggerPacketInterpreter(
             //
             // Instantiate the port information module
             //
+
             val (
               noNewDataSenderModule,
               dataValidOutputModule,
