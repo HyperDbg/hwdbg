@@ -22,6 +22,7 @@ import hwdbg.version._
 import hwdbg.configs._
 import hwdbg.types._
 import hwdbg.utils._
+import hwdbg.script._
 import hwdbg.communication._
 import hwdbg.communication.interpreter._
 
@@ -157,15 +158,30 @@ class DebuggerMain(
   sendWaitForBuffer := outSendWaitForBuffer
 
   // -----------------------------------------------------------------------
+  // Create instance from script execution engine
+  //
+  val (outputPin) =
+    ScriptExecutionEngine(
+      debug,
+      numberOfPins,
+      maximumNumberOfStages,
+      bramAddrWidth,
+      bramDataWidth,
+      portsConfiguration
+    )(
+      io.en,
+      io.inputPin
+    )
+
+  // -----------------------------------------------------------------------
   // Configure the output signals
   //
-  for (i <- 0 until numberOfPins) {
-    io.outputPin(i) := 0.U
-  }
-
   io.wrEna := wrEna
   io.wrData := wrData
   io.rdWrAddr := rdWrAddr
+
+  io.outputPin := outputPin
+
   io.psOutInterrupt := psOutInterrupt
 
 }

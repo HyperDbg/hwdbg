@@ -13,7 +13,7 @@
  * @copyright
  *   This project is released under the GNU Public License v3.
  */
-package hwdbg.exec
+package hwdbg.script
 
 import chisel3._
 import chisel3.util._
@@ -21,7 +21,7 @@ import chisel3.util._
 import hwdbg.configs._
 import hwdbg.stage._
 
-class ScriptExec(
+class ScriptExecutionEngine(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
     maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
@@ -66,14 +66,16 @@ class ScriptExec(
       // At the first stage, the input registers should be passed to the
       // first registers set of the stage registers
       //
-      stageRegs.pinValues(i) := io.inputPin
+      stageRegs.pinValues(i) := io.inputPin.asUInt
 
     } else if (i == (maximumNumberOfStages - 1)) {
 
       //
       // At the last stage, the state registers should be passed to the output
       //
-      outputPin := stageRegs.pinValues(i)
+      for (j <- 0 until numberOfPins) {
+        outputPin(j) := stageRegs.pinValues(i)(j)
+      }
 
     } else {
 
@@ -84,6 +86,7 @@ class ScriptExec(
       stageRegs.pinValues(i + 1) := stageRegs.pinValues(i)
     }
   }
+
   // -----------------------------------------------------------------------
 
   //
@@ -93,7 +96,7 @@ class ScriptExec(
 
 }
 
-object ScriptExec {
+object ScriptExecutionEngine {
 
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
@@ -107,8 +110,8 @@ object ScriptExec {
       inputPin: Vec[UInt]
   ): (Vec[UInt]) = {
 
-    val scriptExecModule = Module(
-      new ScriptExec(
+    val scriptExecutionEngineModule = Module(
+      new ScriptExecutionEngine(
         debug,
         numberOfPins,
         maximumNumberOfStages,
@@ -123,17 +126,17 @@ object ScriptExec {
     //
     // Configure the input signals
     //
-    scriptExecModule.io.en := en
-    scriptExecModule.io.inputPin := inputPin
+    scriptExecutionEngineModule.io.en := en
+    scriptExecutionEngineModule.io.inputPin := inputPin
 
     //
     // Configure the output signals
     //
-    outputPin := scriptExecModule.io.outputPin
+    outputPin := scriptExecutionEngineModule.io.outputPin
 
     //
     // Return the output result
     //
-    outputPin
+    (outputPin)
   }
 }
