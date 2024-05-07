@@ -1,0 +1,139 @@
+/**
+ * @file
+ *   exec.scala
+ * @author
+ *   Sina Karvandi (sina@hyperdbg.org)
+ * @brief
+ *   Script execution engine
+ * @details
+ * @version 0.1
+ * @date
+ *   2024-05-07
+ *
+ * @copyright
+ *   This project is released under the GNU Public License v3.
+ */
+package hwdbg.exec
+
+import chisel3._
+import chisel3.util._
+
+import hwdbg.configs._
+import hwdbg.stage._
+
+class ScriptExec(
+    debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+    numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
+    maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+    bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+    bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+    portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
+) extends Module {
+
+  val io = IO(new Bundle {
+
+    //
+    // Chip signals
+    //
+    val en = Input(Bool()) // chip enable signal
+
+    //
+    // Input/Output signals
+    //
+    val inputPin = Input(Vec(numberOfPins, UInt((1.W)))) // input pins
+    val outputPin = Output(Vec(numberOfPins, UInt((1.W)))) // output pins
+  })
+
+  //
+  // Output pins
+  //
+  val outputPin = Wire(Vec(numberOfPins, UInt((1.W))))
+
+  //
+  // Stage registers
+  //
+  val stageRegs = Reg(new StageRegisters(debug, numberOfPins, maximumNumberOfStages))
+
+  // -----------------------------------------------------------------------
+  //
+  // *** Move each register (input vector) to the next stage at each clock ***
+  //
+  for (i <- 0 until maximumNumberOfStages) {
+
+    if (i == 0) {
+
+      //
+      // At the first stage, the input registers should be passed to the
+      // first registers set of the stage registers
+      //
+      stageRegs.pinValues(i) := io.inputPin
+
+    } else if (i == (maximumNumberOfStages - 1)) {
+
+      //
+      // At the last stage, the state registers should be passed to the output
+      //
+      outputPin := stageRegs.pinValues(i)
+
+    } else {
+
+      //
+      // At the normal (middle) stage, the state registers should be passed to
+      // the next level of stage registers
+      //
+      stageRegs.pinValues(i + 1) := stageRegs.pinValues(i)
+    }
+  }
+  // -----------------------------------------------------------------------
+
+  //
+  // Connect the output signals
+  //
+  io.outputPin := outputPin
+
+}
+
+object ScriptExec {
+
+  def apply(
+      debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
+      numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
+      maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+      bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
+      bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
+      portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
+  )(
+      en: Bool,
+      inputPin: Vec[UInt]
+  ): (Vec[UInt]) = {
+
+    val scriptExecModule = Module(
+      new ScriptExec(
+        debug,
+        numberOfPins,
+        maximumNumberOfStages,
+        bramAddrWidth,
+        bramDataWidth,
+        portsConfiguration
+      )
+    )
+
+    val outputPin = Wire(Vec(numberOfPins, UInt((1.W))))
+
+    //
+    // Configure the input signals
+    //
+    scriptExecModule.io.en := en
+    scriptExecModule.io.inputPin := inputPin
+
+    //
+    // Configure the output signals
+    //
+    outputPin := scriptExecModule.io.outputPin
+
+    //
+    // Return the output result
+    //
+    outputPin
+  }
+}

@@ -52,6 +52,11 @@ object DebuggerConfigurations {
   val NUMBER_OF_PINS: Int = 32
 
   //
+  // Maximum number of stages
+  //
+  val MAXIMUM_NUMBER_OF_STAGES: Int = 10
+
+  //
   // Address width of the Block RAM (BRAM)
   //
   val BLOCK_RAM_ADDR_WIDTH: Int = 13

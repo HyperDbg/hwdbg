@@ -96,12 +96,6 @@ class DebuggerPacketInterpreter(
 
   val regRequestedActionOfThePacketOutput = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
 
-  //////////////////// Test Signals (Should be remove) ////////////////////
-
-  val regRecvScriptSize = RegInit(0.U(new DebuggerRemotePacket().RequestedActionOfThePacket.getWidth.W))
-
-  /////////////////////////////////////////////////////////////////////////
-
   //
   // Apply the chip enable signal
   //
@@ -181,27 +175,9 @@ class DebuggerPacketInterpreter(
           regRequestedActionOfThePacketOutput := HwdbgResponseEnums.hwdbgResponseScriptBufferConfigurationResult.id.U
 
           //
-          // Get next buffer
+          // This action needs a response
           //
-          readNextData := true.B
-
-          when(io.dataValidInput === false.B) {
-
-            //
-            // Still the configuration is not done, so receiving the data
-            // stay at the same state
-            //
-            state := sNewActionReceived
-
-          }.otherwise {
-
-            regRecvScriptSize := io.receivingData
-
-            //
-            // Configuration was done, send the response (result)
-            //
-            state := sSendResponse
-          }
+          state := sSendResponse
 
         }.otherwise {
 
@@ -333,16 +309,6 @@ class DebuggerPacketInterpreter(
             //
             // *** Send result of applying script ***
             //
-
-            //
-            // Set the test data
-            //
-            sendingData := regRecvScriptSize
-
-            //
-            // Data is valid to send
-            //
-            dataValidOutput := true.B
 
             //
             // TODO: To be implemented

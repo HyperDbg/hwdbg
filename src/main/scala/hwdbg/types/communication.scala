@@ -164,7 +164,7 @@ object HwdbgResponseEnums extends Enumeration {
 
   val hwdbgResponseInvalidPacketOrError = Value(1)
   val hwdbgResponseVersion = Value(2)
-  val hwdbgResponsePinInformation = Value(0x8595)
+  val hwdbgResponsePinInformation = Value(3)
   val hwdbgResponseScriptBufferConfigurationResult = Value(4)
 
 }

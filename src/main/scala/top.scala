@@ -24,6 +24,7 @@ import hwdbg.configs._
 class DebuggerModule(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
+    maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
     portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
@@ -64,6 +65,7 @@ class DebuggerModule(
     DebuggerMain(
       debug,
       numberOfPins,
+      maximumNumberOfStages,
       bramAddrWidth,
       bramDataWidth,
       portsConfiguration
@@ -92,6 +94,7 @@ object Main extends App {
       new DebuggerModule(
         DebuggerConfigurations.ENABLE_DEBUG,
         DebuggerConfigurations.NUMBER_OF_PINS,
+        DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
         DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
         DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
         DebuggerPorts.PORT_PINS_MAP
