@@ -40,19 +40,19 @@ class ScriptExecutionEngine(
     //
     // Input/Output signals
     //
-    val inputPin = Input(Vec(numberOfPins, UInt((1.W)))) // input pins
-    val outputPin = Output(Vec(numberOfPins, UInt((1.W)))) // output pins
+    val inputPin = Input(Vec(numberOfPins, UInt(1.W))) // input pins
+    val outputPin = Output(Vec(numberOfPins, UInt(1.W))) // output pins
   })
 
   //
   // Output pins
   //
-  val outputPin = Wire(Vec(numberOfPins, UInt((1.W))))
+  val outputPin = Wire(Vec(numberOfPins, UInt(1.W)))
 
   //
   // Stage registers
   //
-  val stageRegs = Reg(new StageRegisters(debug, numberOfPins, maximumNumberOfStages))
+  val stageRegs = Reg(Vec(maximumNumberOfStages, new StageRegisters(debug, numberOfPins, maximumNumberOfStages)))
 
   // -----------------------------------------------------------------------
   //
@@ -66,12 +66,12 @@ class ScriptExecutionEngine(
       // At the first stage, the input registers should be passed to the
       // first registers set of the stage registers
       //
-      stageRegs.pinValues(i) := io.inputPin.asUInt
+      stageRegs(i).pinValues := io.inputPin
 
       //
       // Each pin start initially start from 0th target stage
       //
-      // stageRegs.targetStage(i) := 0.U
+      stageRegs(i).targetStage := 0.U
 
     } else if (i == (maximumNumberOfStages - 1)) {
 
@@ -79,22 +79,37 @@ class ScriptExecutionEngine(
       // At the last stage, the state registers should be passed to the output
       // Note: At this stage script symbol is useless
       //
-      for (j <- 0 until numberOfPins) {
-        outputPin(j) := stageRegs.pinValues(i)(j)
-      }
+      outputPin := stageRegs(i).pinValues
 
     } else {
 
       //
-      // At the normal (middle) stage, the state registers should be passed to
+      // Instantiate an eval engine for this stage
+      //
+      val (
+        nextStage,
+        outputPin
+      ) = ScriptEngineEval(
+        debug,
+        numberOfPins,
+        maximumNumberOfStages,
+        portsConfiguration
+      )(
+        io.en,
+        stageRegs(i).scriptSymbol,
+        stageRegs(i).pinValues
+      )
+
+      //
+      // At the normal (middle) stage, the result of state registers should be passed to
       // the next level of stage registers
       //
-      stageRegs.pinValues(i + 1) := stageRegs.pinValues(i)
+      stageRegs(i + 1).pinValues := outputPin
 
       //
       // Pass the target stage symbol number to the next stage
       //
-      // stageRegs.targetStage(i + 1) := stageRegs.targetStage(i) // Uncomment
+      stageRegs(i + 1).targetStage := nextStage
 
     }
   }
@@ -133,7 +148,7 @@ object ScriptExecutionEngine {
       )
     )
 
-    val outputPin = Wire(Vec(numberOfPins, UInt((1.W))))
+    val outputPin = Wire(Vec(numberOfPins, UInt(1.W)))
 
     //
     // Configure the input signals

@@ -53,8 +53,8 @@ class DebuggerMain(
     //
     // Input/Output signals
     //
-    val inputPin = Input(Vec(numberOfPins, UInt((1.W)))) // input pins
-    val outputPin = Output(Vec(numberOfPins, UInt((1.W)))) // output pins
+    val inputPin = Input(Vec(numberOfPins, UInt(1.W))) // input pins
+    val outputPin = Output(Vec(numberOfPins, UInt(1.W))) // output pins
 
     //
     // Interrupt signals (lines)
@@ -213,7 +213,7 @@ object DebuggerMain {
       )
     )
 
-    val outputPin = Wire(Vec(numberOfPins, UInt((1.W))))
+    val outputPin = Wire(Vec(numberOfPins, UInt(1.W)))
     val psOutInterrupt = Wire(Bool())
     val rdWrAddr = Wire(UInt(bramAddrWidth.W))
     val wrEna = Wire(Bool())

@@ -66,10 +66,6 @@ object DebuggerConfigurations {
   //
   val BLOCK_RAM_DATA_WIDTH: Int = 32
 
-  //
-  // Single stage script symbol size (equal to sizeof(SYMBOL))
-  //
-  val SINGLE_STAGE_SCRIPT_SYMBOL_SIZE: Int = 32
 }
 
 /**

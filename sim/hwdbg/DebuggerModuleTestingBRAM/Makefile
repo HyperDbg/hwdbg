@@ -12,6 +12,7 @@ VERILOG_SOURCES += $(shell pwd)/../../../generated/InterpreterSendVersion.sv
 VERILOG_SOURCES += $(shell pwd)/../../../generated/InterpreterSendError.sv
 VERILOG_SOURCES += $(shell pwd)/../../../generated/InterpreterPortInformation.sv
 VERILOG_SOURCES += $(shell pwd)/../../../generated/ScriptExecutionEngine.sv
+VERILOG_SOURCES += $(shell pwd)/../../../generated/ScriptEngineEval.sv
 TOPLEVEL = DebuggerModuleTestingBRAM
 MODULE = test_DebuggerModuleTestingBRAM
 

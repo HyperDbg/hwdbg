@@ -39,8 +39,8 @@ class DebuggerModule(
     //
     // Input/Output signals
     //
-    val inputPin = Input(Vec(numberOfPins, UInt((1.W)))) // input pins
-    val outputPin = Output(Vec(numberOfPins, UInt((1.W)))) // output pins
+    val inputPin = Input(Vec(numberOfPins, UInt(1.W))) // input pins
+    val outputPin = Output(Vec(numberOfPins, UInt(1.W))) // output pins
 
     //
     // Interrupt signals (lines)
