@@ -84,33 +84,56 @@ class ScriptExecutionEngine(
     } else {
 
       //
-      // Instantiate an eval engine for this stage
+      // Check if this stage should be ignored (passed to the next stage) or be evaluated
       //
-      val (
-        nextStage,
-        outputPin
-      ) = ScriptEngineEval(
-        debug,
-        numberOfPins,
-        maximumNumberOfStages,
-        portsConfiguration
-      )(
-        io.en,
-        stageRegs(i).scriptSymbol,
-        stageRegs(i).pinValues
-      )
+      when(i.U === stageRegs(i).targetStage) {
 
-      //
-      // At the normal (middle) stage, the result of state registers should be passed to
-      // the next level of stage registers
-      //
-      stageRegs(i + 1).pinValues := outputPin
+        //
+        // *** Based on target stage, this stage needs evaluation ***
+        //
 
-      //
-      // Pass the target stage symbol number to the next stage
-      //
-      stageRegs(i + 1).targetStage := nextStage
+        //
+        // Instantiate an eval engine for this stage
+        //
+        val (
+          nextStage,
+          outputPin
+        ) = ScriptEngineEval(
+          debug,
+          numberOfPins,
+          maximumNumberOfStages,
+          portsConfiguration
+        )(
+          io.en,
+          stageRegs(i).scriptSymbol,
+          stageRegs(i).targetStage,
+          stageRegs(i).pinValues
+        )
 
+        //
+        // At the normal (middle) stage, the result of state registers should be passed to
+        // the next level of stage registers
+        //
+        stageRegs(i + 1).pinValues := outputPin
+
+        //
+        // Pass the target stage symbol number to the next stage
+        //
+        stageRegs(i + 1).targetStage := nextStage
+
+      }.otherwise {
+
+        //
+        // *** Based on target stage, this stage should be ignore ***
+        //
+
+        //
+        // Just pass all the values to the next stage
+        //
+        stageRegs(i + 1).pinValues := stageRegs(i).pinValues
+        stageRegs(i + 1).targetStage := stageRegs(i).targetStage
+
+      }
     }
   }
 

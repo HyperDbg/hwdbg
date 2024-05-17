@@ -39,6 +39,8 @@ class ScriptEngineEval(
     // Evaluation symbol
     //
     val symbol = Input(new SYMBOL)
+
+    val currentStage = Input(UInt(log2Ceil(maximumNumberOfStages).W))
     val nextStage = Output(UInt(log2Ceil(maximumNumberOfStages).W))
 
     //
@@ -52,14 +54,18 @@ class ScriptEngineEval(
   // Output pins
   //
   // val outputPin = Wire(Vec(numberOfPins, UInt(1.W)))
-  // val nextStage = Wire(UInt(log2Ceil(maximumNumberOfStages).W))
+  val nextStage = Wire(UInt(log2Ceil(maximumNumberOfStages).W))
+
+  //
+  // Increment the stage
+  //
+  nextStage := io.currentStage + 1.U
 
   //
   // Connect the output signals
   //
-  // io.nextStage := nextStage
+  io.nextStage := nextStage
   // io.outputPin := outputPin
-  io.nextStage := 0.U
   io.outputPin := io.inputPin
 
 }
@@ -74,6 +80,7 @@ object ScriptEngineEval {
   )(
       en: Bool,
       symbol: SYMBOL,
+      currentStage: UInt,
       inputPin: Vec[UInt]
   ): (UInt, Vec[UInt]) = {
 
@@ -94,6 +101,7 @@ object ScriptEngineEval {
     //
     scriptEngineEvalModule.io.en := en
     scriptEngineEvalModule.io.symbol := symbol
+    scriptEngineEvalModule.io.currentStage := currentStage
     scriptEngineEvalModule.io.inputPin := inputPin
 
     //
