@@ -68,10 +68,16 @@ class ScriptExecutionEngine(
       //
       stageRegs.pinValues(i) := io.inputPin.asUInt
 
+      //
+      // Each pin start initially start from 0th target stage
+      //
+      // stageRegs.targetStage(i) := 0.U
+
     } else if (i == (maximumNumberOfStages - 1)) {
 
       //
       // At the last stage, the state registers should be passed to the output
+      // Note: At this stage script symbol is useless
       //
       for (j <- 0 until numberOfPins) {
         outputPin(j) := stageRegs.pinValues(i)(j)
@@ -84,6 +90,12 @@ class ScriptExecutionEngine(
       // the next level of stage registers
       //
       stageRegs.pinValues(i + 1) := stageRegs.pinValues(i)
+
+      //
+      // Pass the target stage symbol number to the next stage
+      //
+      // stageRegs.targetStage(i + 1) := stageRegs.targetStage(i) // Uncomment
+
     }
   }
 

@@ -93,6 +93,22 @@ class DebuggerMain(
   val sendWaitForBuffer = Wire(Bool())
 
   // -----------------------------------------------------------------------
+  // Create instance from script execution engine
+  //
+  val (outputPin) =
+    ScriptExecutionEngine(
+      debug,
+      numberOfPins,
+      maximumNumberOfStages,
+      bramAddrWidth,
+      bramDataWidth,
+      portsConfiguration
+    )(
+      io.en,
+      io.inputPin
+    )
+
+  // -----------------------------------------------------------------------
   // Create instance from interpreter
   //
   val (
@@ -156,22 +172,6 @@ class DebuggerMain(
   dataValidOutput := outDataValidOutput
   receivingData := outReceivingData
   sendWaitForBuffer := outSendWaitForBuffer
-
-  // -----------------------------------------------------------------------
-  // Create instance from script execution engine
-  //
-  val (outputPin) =
-    ScriptExecutionEngine(
-      debug,
-      numberOfPins,
-      maximumNumberOfStages,
-      bramAddrWidth,
-      bramDataWidth,
-      portsConfiguration
-    )(
-      io.en,
-      io.inputPin
-    )
 
   // -----------------------------------------------------------------------
   // Configure the output signals
