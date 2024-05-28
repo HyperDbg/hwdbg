@@ -19,14 +19,27 @@ import chisel3._
 import chisel3.util._
 
 import hwdbg.configs._
+import hwdbg.utils._
 import hwdbg.stage._
+
+object ScriptEvalFunc {
+  object ScriptOperators extends ChiselEnum {
+    val sFuncInc, sFuncDec, sFuncDec2, sFuncDec3, sFuncDec4, sFuncDec5, sFuncDec6, sFuncDec7 = Value
+  }
+}
 
 class ScriptEngineEval(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
-    maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+    maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
     portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
 ) extends Module {
+
+  //
+  // Import state enum
+  //
+  import ScriptEvalFunc.ScriptOperators
+  import ScriptEvalFunc.ScriptOperators._
 
   val io = IO(new Bundle {
 
@@ -36,9 +49,9 @@ class ScriptEngineEval(
     val en = Input(Bool()) // chip enable signal
 
     //
-    // Evaluation symbol
+    // Evaluation operator symbol
     //
-    val symbol = Input(new SYMBOL)
+    val operator = Input(new SYMBOL)
 
     val currentStage = Input(UInt(log2Ceil(maximumNumberOfStages).W))
     val nextStage = Output(UInt(log2Ceil(maximumNumberOfStages).W))
@@ -54,12 +67,40 @@ class ScriptEngineEval(
   // Output pins
   //
   // val outputPin = Wire(Vec(numberOfPins, UInt(1.W)))
-  val nextStage = Wire(UInt(log2Ceil(maximumNumberOfStages).W))
+  val nextStage = WireInit(0.U(log2Ceil(maximumNumberOfStages).W))
+
+  //
+  // Assign operator value (split the signal into only usable part)
+  //
+  LogInfo(debug)("Usable size of Value in the SYMBOL: " + ScriptOperators().getWidth)
+  val operatorValue = io.operator.Value(ScriptOperators().getWidth - 1, 0).asTypeOf(ScriptOperators())
+
+  //
+  // *** Implementing the evaluation engine ***
+  //
+
+  //
+  // Apply the chip enable signal
+  //
+  when(io.en === true.B) {
+
+    switch(operatorValue) {
+
+      is(sFuncInc) {
+        nextStage := io.currentStage + 1.U
+      }
+      is(sFuncDec) {
+        nextStage := io.currentStage + 2.U
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------
 
   //
   // Increment the stage
   //
-  nextStage := io.currentStage + 1.U
+  // nextStage := io.currentStage + 1.U
 
   //
   // Connect the output signals
@@ -75,11 +116,11 @@ object ScriptEngineEval {
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
       numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
-      maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+      maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
       portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
   )(
       en: Bool,
-      symbol: SYMBOL,
+      operator: SYMBOL,
       currentStage: UInt,
       inputPin: Vec[UInt]
   ): (UInt, Vec[UInt]) = {
@@ -100,7 +141,7 @@ object ScriptEngineEval {
     // Configure the input signals
     //
     scriptEngineEvalModule.io.en := en
-    scriptEngineEvalModule.io.symbol := symbol
+    scriptEngineEvalModule.io.operator := operator
     scriptEngineEvalModule.io.currentStage := currentStage
     scriptEngineEvalModule.io.inputPin := inputPin
 

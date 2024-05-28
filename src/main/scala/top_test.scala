@@ -25,7 +25,7 @@ import hwdbg.libs.mem._
 class DebuggerModuleTestingBRAM(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
-    maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+    maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
     portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
@@ -126,7 +126,7 @@ object MainWithInitializedBRAM extends App {
       new DebuggerModuleTestingBRAM(
         DebuggerConfigurations.ENABLE_DEBUG,
         DebuggerConfigurations.NUMBER_OF_PINS,
-        DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+        ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
         DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
         DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
         DebuggerPorts.PORT_PINS_MAP

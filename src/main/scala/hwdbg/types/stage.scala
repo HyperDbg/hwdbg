@@ -46,7 +46,7 @@ class SYMBOL extends Bundle {
 class StageRegisters(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
-    maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES
+    maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES
 ) extends Bundle {
   val pinValues = Vec(numberOfPins, UInt(1.W)) // The value of each pin in each stage (should be passed to the next stage)
   val scriptSymbol = new SYMBOL // Interpreted script symbol for the target stage (should NOT be passed to the next stage)

@@ -52,11 +52,6 @@ object DebuggerConfigurations {
   val NUMBER_OF_PINS: Int = 32
 
   //
-  // Maximum number of stages
-  //
-  val MAXIMUM_NUMBER_OF_STAGES: Int = 10
-
-  //
   // Address width of the Block RAM (BRAM)
   //
   val BLOCK_RAM_ADDR_WIDTH: Int = 13
@@ -65,6 +60,24 @@ object DebuggerConfigurations {
   // Data width of the Block RAM (BRAM)
   //
   val BLOCK_RAM_DATA_WIDTH: Int = 32
+
+}
+
+/**
+ * @brief
+ *   Design constants for script engine
+ */
+object ScriptEngineConfigurations {
+
+  //
+  // Maximum number of stages
+  //
+  val MAXIMUM_NUMBER_OF_STAGES: Int = 10
+
+  //
+  // Maximum number of stages
+  //
+  val MAXIMUM_NUMBER_OF_SUPPORTED_OPERATORS: Int = 2
 
 }
 

@@ -29,7 +29,7 @@ import hwdbg.communication.interpreter._
 class DebuggerMain(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
-    maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+    maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
     portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
@@ -191,7 +191,7 @@ object DebuggerMain {
   def apply(
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
       numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
-      maximumNumberOfStages: Int = DebuggerConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+      maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
       portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
