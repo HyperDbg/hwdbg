@@ -25,6 +25,7 @@ class ScriptExecutionEngine(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
     maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+    maximumNumberOfSupportedScriptOperators: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_SUPPORTED_OPERATORS,
     bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
     bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
     portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
@@ -93,6 +94,15 @@ class ScriptExecutionEngine(
         //
 
         //
+        // Create a Vec containing script symbol elements
+        //
+        val scriptSymbols = Wire(Vec(maximumNumberOfSupportedScriptOperators, new SYMBOL))
+
+        for (j <- 0 until maximumNumberOfSupportedScriptOperators) {
+          scriptSymbols(j) := stageRegs(i + j).scriptSymbol
+        }
+
+        //
         // Instantiate an eval engine for this stage
         //
         val (
@@ -102,10 +112,11 @@ class ScriptExecutionEngine(
           debug,
           numberOfPins,
           maximumNumberOfStages,
+          maximumNumberOfSupportedScriptOperators,
           portsConfiguration
         )(
           io.en,
-          stageRegs(i).scriptSymbol,
+          scriptSymbols,
           stageRegs(i).targetStage,
           stageRegs(i).pinValues
         )
@@ -152,6 +163,7 @@ object ScriptExecutionEngine {
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
       numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
       maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+      maximumNumberOfSupportedScriptOperators: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_SUPPORTED_OPERATORS,
       bramAddrWidth: Int = DebuggerConfigurations.BLOCK_RAM_ADDR_WIDTH,
       bramDataWidth: Int = DebuggerConfigurations.BLOCK_RAM_DATA_WIDTH,
       portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
@@ -165,6 +177,7 @@ object ScriptExecutionEngine {
         debug,
         numberOfPins,
         maximumNumberOfStages,
+        maximumNumberOfSupportedScriptOperators,
         bramAddrWidth,
         bramDataWidth,
         portsConfiguration

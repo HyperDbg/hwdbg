@@ -32,6 +32,7 @@ class ScriptEngineEval(
     debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
     numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
     maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+    maximumNumberOfSupportedScriptOperators: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_SUPPORTED_OPERATORS,
     portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
 ) extends Module {
 
@@ -51,7 +52,7 @@ class ScriptEngineEval(
     //
     // Evaluation operator symbol
     //
-    val operator = Input(new SYMBOL)
+    val operator = Input(Vec(maximumNumberOfSupportedScriptOperators, new SYMBOL))
 
     val currentStage = Input(UInt(log2Ceil(maximumNumberOfStages).W))
     val nextStage = Output(UInt(log2Ceil(maximumNumberOfStages).W))
@@ -73,7 +74,7 @@ class ScriptEngineEval(
   // Assign operator value (split the signal into only usable part)
   //
   LogInfo(debug)("Usable size of Value in the SYMBOL: " + ScriptOperators().getWidth)
-  val operatorValue = io.operator.Value(ScriptOperators().getWidth - 1, 0).asTypeOf(ScriptOperators())
+  val mainOperatorValue = io.operator(0).Value(ScriptOperators().getWidth - 1, 0).asTypeOf(ScriptOperators())
 
   //
   // *** Implementing the evaluation engine ***
@@ -84,7 +85,7 @@ class ScriptEngineEval(
   //
   when(io.en === true.B) {
 
-    switch(operatorValue) {
+    switch(mainOperatorValue) {
 
       is(sFuncInc) {
         nextStage := io.currentStage + 1.U
@@ -117,10 +118,11 @@ object ScriptEngineEval {
       debug: Boolean = DebuggerConfigurations.ENABLE_DEBUG,
       numberOfPins: Int = DebuggerConfigurations.NUMBER_OF_PINS,
       maximumNumberOfStages: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_STAGES,
+      maximumNumberOfSupportedScriptOperators: Int = ScriptEngineConfigurations.MAXIMUM_NUMBER_OF_SUPPORTED_OPERATORS,
       portsConfiguration: Map[Int, Int] = DebuggerPorts.PORT_PINS_MAP
   )(
       en: Bool,
-      operator: SYMBOL,
+      operator: Vec[SYMBOL],
       currentStage: UInt,
       inputPin: Vec[UInt]
   ): (UInt, Vec[UInt]) = {
@@ -130,6 +132,7 @@ object ScriptEngineEval {
         debug,
         numberOfPins,
         maximumNumberOfStages,
+        maximumNumberOfSupportedScriptOperators,
         portsConfiguration
       )
     )
